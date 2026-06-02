@@ -7,31 +7,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:    #080a10;
-  --s1:    #0f1219;
-  --s2:    #151922;
-  --s3:    #1c2030;
-  --s4:    #222840;
-  --bdr:   rgba(255,255,255,.07);
-  --bdr2:  rgba(255,255,255,.13);
-  --txt:   #eef0f8;
-  --txt2:  #8891b0;
-  --txt3:  #515a78;
-  --blue:  #4d8bf5;
-  --bdim:  rgba(77,139,245,.12);
-  --amb:   #f5a623;
-  --adim:  rgba(245,166,35,.1);
-  --grn:   #2dd4bf;
-  --gdim:  rgba(45,212,191,.1);
-  --red:   #f87171;
-  --pur:   #a78bfa;
+  --bg:    #eef1f6;
+  --s1:    #ffffff;
+  --s2:    #f8fafc;
+  --s3:    #f1f5f9;
+  --s4:    #e2e8f0;
+  --bdr:   #dde3ed;
+  --bdr2:  #c8d1e0;
+  --txt:   #0f172a;
+  --txt2:  #475569;
+  --txt3:  #94a3b8;
+  --blue:  #2563eb;
+  --bdim:  rgba(37,99,235,.08);
+  --amb:   #c2790a;
+  --adim:  rgba(194,121,10,.08);
+  --grn:   #059669;
+  --gdim:  rgba(5,150,105,.08);
+  --red:   #dc2626;
+  --pur:   #7c3aed;
   --r:     9px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{height:100%}
 body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.5;height:100%}
 
-#topbar{position:sticky;top:0;z-index:100;background:rgba(8,10,16,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:0;height:52px;padding:0 20px}
+#topbar{position:sticky;top:0;z-index:100;background:#ffffff;border-bottom:1px solid var(--bdr);box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:0;height:52px;padding:0 20px}
 #topbar .logo{font-size:13px;font-weight:700;padding-right:18px;border-right:1px solid var(--bdr);margin-right:18px;white-space:nowrap;letter-spacing:-.2px}
 #topbar .logo em{color:var(--blue);font-style:normal}
 .tb-veh{display:flex;align-items:center;gap:10px;min-width:0}
@@ -49,7 +49,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,Bli
 .yrp.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
 .wrap{display:flex;height:calc(100vh - 52px);overflow:hidden}
-.lp{width:390px;min-width:360px;background:var(--s1);border-right:1px solid var(--bdr);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--s4) transparent}
+.lp{width:390px;min-width:360px;background:var(--bg);border-right:1px solid var(--bdr);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--s4) transparent}
 .rp{flex:1;overflow-y:auto;background:var(--bg);scrollbar-width:thin;scrollbar-color:var(--s4) transparent}
 .lp-inner{padding:16px}
 .rp-inner{padding:22px;max-width:1100px}
@@ -65,7 +65,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,Bli
 .ch.coll{cursor:pointer;user-select:none}
 .ch.coll:hover{background:var(--s3)}
 .ci{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-.ci-a{background:var(--bdim)}.ci-b{background:var(--adim)}.ci-n{background:rgba(255,255,255,.05)}
+.ci-a{background:var(--bdim)}.ci-b{background:var(--adim)}.ci-n{background:rgba(0,0,0,.04)}
 .ch h2{font-size:12px;font-weight:600;color:var(--txt);flex:1;margin:0}
 .chv{font-size:10px;color:var(--txt3);transition:transform .2s}
 .ch.coll.open .chv{transform:rotate(180deg)}
@@ -77,9 +77,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,Bli
 .fg-1{grid-column:1/-1}
 label{display:block;font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:3px}
 .fh{font-size:10px;color:var(--txt3);margin-top:2px;font-style:italic}
-input[type=number],input[type=text],select{width:100%;background:var(--s3);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);padding:7px 9px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;appearance:none}
-input:focus,select:focus{border-color:var(--blue);background:var(--s4)}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23515a78'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+input[type=number],input[type=text],select{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);padding:7px 9px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
 input[type=checkbox]{accent-color:var(--blue);width:13px;height:13px;cursor:pointer}
 
 .seg{display:flex;border:1px solid var(--bdr);border-radius:6px;overflow:hidden;margin-bottom:12px}
@@ -97,20 +97,20 @@ input[type=checkbox]{accent-color:var(--blue);width:13px;height:13px;cursor:poin
 .dep-table{width:100%;border-collapse:collapse;margin-bottom:4px}
 .dep-table th{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;padding:4px 3px;text-align:center;border-bottom:1px solid var(--bdr)}
 .dep-table td{padding:3px 2px;text-align:center}
-.dep-table input{width:44px;padding:4px 3px;font-size:11px;text-align:center;background:var(--s3);border:1px solid var(--bdr);border-radius:4px;color:var(--txt);font-family:inherit;outline:none}
+.dep-table input{width:44px;padding:4px 3px;font-size:11px;text-align:center;background:var(--s1);border:1px solid var(--bdr);border-radius:4px;color:var(--txt);font-family:inherit;outline:none}
 .dep-table input:focus{border-color:var(--blue)}
 
-.ev-box{background:rgba(45,212,191,.05);border:1px solid rgba(45,212,191,.15);border-radius:6px;padding:10px;margin-top:8px}
+.ev-box{background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.2);border-radius:6px;padding:10px;margin-top:8px}
 .ev-box-lbl{font-size:10px;font-weight:600;color:var(--grn);margin-bottom:8px}
 .mr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .mr label{margin:0;flex:1;font-size:11px;color:var(--txt2)}
 .mr input{width:70px}
-.cbrow{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s3);border-radius:6px;border:1px solid var(--bdr);cursor:pointer}
+.cbrow{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s1);border-radius:6px;border:1px solid var(--bdr);cursor:pointer}
 .cbrow label{margin:0;color:var(--txt2);font-size:11px;cursor:pointer;flex:1}
 .div{height:1px;background:var(--bdr);margin:10px 0}
 
 .scards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
-.sc{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.sc{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .sc.sa::before{background:linear-gradient(90deg,var(--blue),transparent)}
 .sc.sb::before{background:linear-gradient(90deg,var(--amb),transparent)}
@@ -121,31 +121,31 @@ input[type=checkbox]{accent-color:var(--blue);width:13px;height:13px;cursor:poin
 .sc.sa .stot{color:var(--blue)}.sc.sb .stot{color:var(--amb)}.sc.ss .stot{color:var(--grn)}
 .sc .ssub{font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600;line-height:1.5}
-.bwin{background:rgba(45,212,191,.1);color:var(--grn);border:1px solid rgba(45,212,191,.2)}
-.blo{background:var(--bdim);color:var(--blue);border:1px solid rgba(77,139,245,.2)}
-.ble{background:rgba(167,139,250,.12);color:var(--pur);border:1px solid rgba(167,139,250,.2)}
-.bca{background:var(--gdim);color:var(--grn);border:1px solid rgba(45,212,191,.2)}
+.bwin{background:rgba(5,150,105,.1);color:var(--grn);border:1px solid rgba(5,150,105,.25)}
+.blo{background:var(--bdim);color:var(--blue);border:1px solid rgba(37,99,235,.2)}
+.ble{background:rgba(124,58,237,.08);color:var(--pur);border:1px solid rgba(124,58,237,.2)}
+.bca{background:var(--gdim);color:var(--grn);border:1px solid rgba(5,150,105,.2)}
 
-.tbl-wrap{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
-.tbl-head{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:var(--s1)}
+.tbl-wrap{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.tbl-head{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:var(--s2)}
 .tbl-head h3{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em}
 .tbl-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{padding:8px 11px;text-align:right;font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bdr);white-space:nowrap;background:var(--s1)}
+th{padding:8px 11px;text-align:right;font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bdr);white-space:nowrap;background:var(--s2)}
 th:first-child{text-align:left;min-width:170px}
-td{padding:6px 11px;text-align:right;border-bottom:1px solid rgba(255,255,255,.025);color:var(--txt2);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
+td{padding:6px 11px;text-align:right;border-bottom:1px solid rgba(0,0,0,.04);color:var(--txt2);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
 td:first-child{text-align:left;color:var(--txt);font-weight:500;font-size:12px}
-tr:hover td{background:rgba(255,255,255,.015)}
-tr.sec-hdr td{background:var(--s1);padding:7px 11px 5px;font-size:10px;font-weight:700;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
-tr.row-tot td{font-weight:700;font-size:13px;color:var(--txt);background:var(--s3);border-top:1px solid var(--bdr);border-bottom:2px solid var(--bdr)}
+tr:hover td{background:rgba(37,99,235,.03)}
+tr.sec-hdr td{background:var(--s3);padding:7px 11px 5px;font-size:10px;font-weight:700;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+tr.row-tot td{font-weight:700;font-size:13px;color:var(--txt);background:var(--s3);border-top:2px solid var(--bdr);border-bottom:2px solid var(--bdr)}
 tr.row-tot td.ca{color:var(--blue)}
 tr.row-tot td.cb{color:var(--amb)}
 tr.row-mval td{color:var(--txt3);font-style:italic;font-size:11px}
 tr.row-lbal td{color:var(--red);font-style:italic;font-size:11px}
 tr.row-eq td{color:var(--grn);font-size:11px}
-tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:700;padding:7px 11px 5px;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+tr.diff-hdr td{background:rgba(5,150,105,.05);color:var(--grn);font-size:10px;font-weight:700;padding:7px 11px 5px;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
 
-.notes{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:16px 18px;margin-bottom:20px}
+.notes{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .notes h4{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
 .notes p{font-size:11px;color:var(--txt3);line-height:1.7;margin-bottom:5px}
 .notes p:last-child{margin:0}
@@ -154,7 +154,8 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+.cost-summary-note{font-size:10px;color:var(--txt3);margin-top:4px;padding:6px 8px;background:var(--s3);border-radius:4px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -162,13 +163,13 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
 <div id="topbar">
   <div class="logo">TCO <em>Calc</em></div>
   <div class="tb-veh">
-    <div class="tb-dot" style="background:var(--blue);box-shadow:0 0 6px rgba(77,139,245,.5)"></div>
+    <div class="tb-dot" style="background:var(--blue)"></div>
     <span class="tb-name" id="tbna">Vehicle A</span>
     <span class="tb-total a" id="tbta">—</span>
   </div>
   <span class="tb-sep">vs</span>
   <div class="tb-veh">
-    <div class="tb-dot" style="background:var(--amb);box-shadow:0 0 6px rgba(245,166,35,.5)"></div>
+    <div class="tb-dot" style="background:var(--amb)"></div>
     <span class="tb-name" id="tbnb">Vehicle B</span>
     <span class="tb-total b" id="tbtb">—</span>
   </div>
@@ -275,11 +276,12 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
             <button class="dp" onclick="setPreset('A','minivan')">Minivan</button>
           </div>
           <table class="dep-table" id="dtA"></table>
-          <p style="font-size:9px;color:var(--txt3);margin-top:5px;line-height:1.5">Each cell = % of MSRP the car retains at end of that year. Source: iSeeCars 2025–26 (950k+ transactions), Edmunds TMV data.</p>
+          <p style="font-size:9px;color:var(--txt3);margin-top:5px;line-height:1.5">Each cell = % of MSRP retained at end of that year. Source: iSeeCars 2025-26 (950k+ transactions).</p>
         </div>
         <div class="div"></div>
         <h4 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Maintenance &amp; Repairs</h4>
-        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;line-height:1.5">Base: AAA 2025 + RepairPal. Combined $1,000–$1,700/yr in yrs 1–5, rising to $2,800+/yr by yr 10. Multiplier scales both proportionally.</p>
+        <div class="cost-summary-note" id="costNoteA">Loading…</div>
+        <p style="font-size:9px;color:var(--txt3);margin-top:6px;margin-bottom:8px;line-height:1.5">Multipliers scale the base costs above. Use higher values for older/high-mileage vehicles or known reliability issues.</p>
         <div class="mr"><label>Maintenance scale <span style="font-weight:400;font-style:italic">(1.0 = average)</span></label><input type="number" id="mmA" value="1.0" step="0.1" min="0.1" max="5" oninput="recalc()"></div>
         <div class="mr"><label>Repair scale <span style="font-weight:400;font-style:italic">(1.0 = average)</span></label><input type="number" id="rmA" value="1.0" step="0.1" min="0.1" max="5" oninput="recalc()"></div>
         <div class="div"></div>
@@ -361,9 +363,12 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
             <button class="dp" onclick="setPreset('B','minivan')">Minivan</button>
           </div>
           <table class="dep-table" id="dtB"></table>
-          <p style="font-size:9px;color:var(--txt3);margin-top:5px;line-height:1.5">% of MSRP retained at end of each year. Source: iSeeCars 2025–26.</p>
+          <p style="font-size:9px;color:var(--txt3);margin-top:5px;line-height:1.5">% of MSRP retained at end of each year. Source: iSeeCars 2025-26.</p>
         </div>
         <div class="div"></div>
+        <h4 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Maintenance &amp; Repairs</h4>
+        <div class="cost-summary-note" id="costNoteB">Loading…</div>
+        <p style="font-size:9px;color:var(--txt3);margin-top:6px;margin-bottom:8px;line-height:1.5">Multipliers scale the base costs above.</p>
         <div class="mr"><label>Maintenance scale</label><input type="number" id="mmB" value="1.0" step="0.1" min="0.1" max="5" oninput="recalc()"></div>
         <div class="mr"><label>Repair scale</label><input type="number" id="rmB" value="1.0" step="0.1" min="0.1" max="5" oninput="recalc()"></div>
         <div class="div"></div>
@@ -400,7 +405,7 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
     <h4>Methodology &amp; Data Sources</h4>
     <p><strong>Depreciation (typically 40–60% of total ownership cost):</strong> Modeled as "% of MSRP retained" at end of each year — the industry-standard format used by Edmunds, KBB, and ALG/JD Power. Year-0 cost basis = your purchase price. Years 1+ projected market value = MSRP × residual %. Buying below MSRP directly reduces your year-1 depreciation cost. Changing MSRP shifts the entire future value curve proportionally.</p>
     <p><strong>Depreciation presets — source: iSeeCars 2025–26 study (950,000+ real transactions):</strong> Mainstream sedan (Camry, Accord): 84%→55% retained yrs 1–5. Mainstream SUV (RAV4, CR-V): 88%→57%. Pickup truck (F-150, Ram): 87%→55%. Luxury sedan (BMW 5-series): 76%→41%. Luxury SUV (Lexus GX): 81%→48%. EV (Tesla Model 3): 78%→40% — high variance due to Tesla price cuts 2023–24. Sports car (Porsche 911, Corvette): 90%→67%. All values are editable.</p>
-    <p><strong>Maintenance &amp; repairs:</strong> Base curves from AAA 2025 "Your Driving Costs" study and RepairPal aggregate data ($652/yr avg repairs). Combined costs: ~$1,000–$1,700/yr in years 1–5, rising to ~$2,800/yr by year 10. Multiply up for German luxury, down for Toyota/Honda reliability.</p>
+    <p><strong>Maintenance &amp; repairs — vehicle-type-specific:</strong> Each depreciation preset carries its own maintenance and repair cost curves. Calibrated to RepairPal per-model annual averages (2024–25) and AAA 2025 "Your Driving Costs." Examples: Mainstream sedan (Camry/Accord) — $500/yr maintenance, $0 repairs yrs 1–3, ~$350–1,150 yrs 4–10. Luxury sedan (BMW 5/Benz E) — $1,000/yr maintenance yr 1, rising to $4,600/yr by yr 10; repairs $600 at yr 4, up to $3,800 by yr 10. EV (Tesla Model 3) — $250/yr maintenance (no oil changes), repairs ~$300/yr once out of warranty. The base costs shown in the Advanced panel update automatically when you change the vehicle type preset.</p>
     <p><strong>Why the TOTAL row = your net out-of-pocket cost if you sell:</strong> Depreciation = Purchase Price − Market Value (the value you lose). Total = Depreciation + Interest + Operating = (Price − MV) + I + Ops. Net cash cost if sold = all cash spent − net sale proceeds = (Price − MV) + I + Ops. These are identical — remaining loan balance cancels algebraically. So the TOTAL is your true net cost regardless of when in the loan you sell. The "Net Equity" sub-row shows what you'd actually pocket from selling (market value minus any loan payoff).</p>
     <p><strong>Financing:</strong> Full amortization — only interest is a cost (principal is equity recovered at sale). The "Remaining Loan Balance" row shows what you'd need to pay off at each year if selling early. Lease cost = all monthly payments + CCR + acquisition + disposition + excess mileage. Leases have no residual equity.</p>
     <p><strong>Opportunity cost:</strong> Compound annual return on down payment cash invested instead of spent. Default 6% = approximate long-run equity market return above inflation.</p>
@@ -412,28 +417,67 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
 <script>
 // ── Residual value presets ────────────────────────────────────────────────────
 // Values = % of MSRP retained at END of year N (years 1–10)
-// Source: iSeeCars 2025–26 (950k+ transactions), Edmunds TMV, CarEdge
+// Source: iSeeCars 2025-26 study (950k+ transactions), Edmunds TMV, CarEdge
 const PRESETS = {
-  mainSed: [84,72,62,54,48,43,38,34,31,28],  // Mainstream sedan — Toyota Camry, Honda Accord
-  mainSuv: [88,78,70,63,57,52,47,42,38,35],  // Mainstream SUV — Toyota RAV4, Honda CR-V
-  truck:   [87,76,67,60,55,50,45,41,37,34],  // Pickup truck — Ford F-150, Ram 1500
-  luxSed:  [76,63,54,46,41,36,32,28,25,22],  // Luxury sedan — BMW 5 Series, Mercedes E-Class
-  luxSuv:  [81,70,61,54,48,43,39,35,31,28],  // Luxury SUV — Lexus GX, BMW X5
-  ev:      [78,62,52,45,40,35,31,28,25,22],  // Electric — Tesla Model 3 (conservative; high variance)
-  sports:  [90,82,75,70,67,63,60,56,52,49],  // Sports car — Porsche 911, Chevrolet Corvette
-  minivan: [81,70,61,54,48,43,38,34,30,27],  // Minivan — Toyota Sienna, Chrysler Pacifica
+  mainSed: [84,72,62,54,48,43,38,34,31,28],
+  mainSuv: [88,78,70,63,57,52,47,42,38,35],
+  truck:   [87,76,67,60,55,50,45,41,37,34],
+  luxSed:  [76,63,54,46,41,36,32,28,25,22],
+  luxSuv:  [81,70,61,54,48,43,39,35,31,28],
+  ev:      [78,62,52,45,40,35,31,28,25,22],
+  sports:  [90,82,75,70,67,63,60,56,52,49],
+  minivan: [81,70,61,54,48,43,38,34,30,27],
 };
 
-// Annual scheduled maintenance ($/yr, years 1–10) — AAA 2025 + factory service data
-const MAINT = [450,550,650,850,1050,1200,1350,1500,1650,1850];
+// ── Maintenance by vehicle type ($/yr, years 1-10) ───────────────────────────
+// Scheduled service: oil/filter, rotation, cabin+air filters, brake fluid,
+// tire replacement (prorated @15k mi/yr), spark plugs, fluid flushes.
+// Source: AAA 2025 "Your Driving Costs" + RepairPal + Edmunds service data.
+// Luxury = dealer pricing (BMW/Mercedes require premium oil, OEM parts, higher labor).
+const MAINT_BY_TYPE = {
+  mainSed: [ 500, 550, 650, 800,  900, 1000, 1100, 1200, 1300, 1450],
+  mainSuv: [ 600, 650, 750, 950, 1100, 1200, 1300, 1450, 1600, 1750],
+  truck:   [ 700, 800, 950,1150, 1300, 1500, 1650, 1800, 2000, 2200],
+  luxSed:  [1000,1200,1500,2000, 2500, 3000, 3400, 3800, 4200, 4600],
+  luxSuv:  [ 900,1100,1400,1900, 2300, 2800, 3100, 3400, 3700, 4100],
+  ev:      [ 250, 300, 350, 400,  450,  550,  650,  750,  900, 1050],
+  sports:  [1200,1500,1900,2400, 3000, 3500, 3900, 4300, 4700, 5100],
+  minivan: [ 600, 700, 800, 950, 1100, 1250, 1400, 1550, 1700, 1900],
+};
 
-// Annual repair costs ($/yr) — $0 under warranty (yrs 1-3), rising with age
-// Based on RepairPal avg $652/yr across all ages + age curve
-const REPAIR = [0,0,0,350,600,850,1100,1350,1600,1900];
+// ── Repairs by vehicle type ($/yr, years 1-10) ───────────────────────────────
+// Unscheduled: brakes, battery, suspension, unexpected failures.
+// Years 1-3 = $0 (manufacturer warranty on new vehicles).
+// Calibrated to RepairPal per-model annual averages (2024-25):
+//   Camry $388 · Accord $400 · RAV4 $429 · F-150 $788 · Ram $694
+//   BMW 5 $1,176 · Benz E $1,025 · BMW X5 $1,166 · Lexus GX ~$500
+//   Corvette $737 · Sienna $547 · Pacifica $571 · Tesla Model 3 est. ~$300
+const REPAIR_BY_TYPE = {
+  mainSed: [0, 0, 0, 200, 350,  450,  600,  750,  950, 1150],
+  mainSuv: [0, 0, 0, 250, 400,  550,  700,  900, 1100, 1350],
+  truck:   [0, 0, 0, 400, 650,  850, 1050, 1300, 1600, 1900],
+  luxSed:  [0, 0, 0, 600,1050, 1550, 2100, 2700, 3200, 3800],
+  luxSuv:  [0, 0, 0, 500, 900, 1350, 1800, 2300, 2800, 3300],
+  ev:      [0, 0, 0, 100, 200,  350,  500,  650,  800, 1000],
+  sports:  [0, 0, 0, 500, 900, 1400, 1900, 2400, 2900, 3400],
+  minivan: [0, 0, 0, 300, 500,  700,  900, 1100, 1350, 1600],
+};
 
-let residuals = { A:[...PRESETS.mainSed], B:[...PRESETS.mainSed] };
-let finMode   = { A:'loan', B:'loan' };
-let activeYrs = 5;
+const PRESET_LABELS = {
+  mainSed:'Mainstream Sedan (Camry/Accord — RepairPal avg $388-400/yr)',
+  mainSuv:'Mainstream SUV (RAV4/CR-V — RepairPal avg $429/yr)',
+  truck:  'Pickup Truck (F-150/Ram — RepairPal avg $694-788/yr)',
+  luxSed: 'Luxury Sedan (BMW 5/Benz E — RepairPal avg $1,025-1,176/yr)',
+  luxSuv: 'Luxury SUV (BMW X5/Lexus GX — RepairPal avg $500-1,166/yr)',
+  ev:     'Electric Vehicle (Tesla Model 3 — est. ~$300/yr repairs)',
+  sports: 'Sports Car (Porsche 911/Corvette — RepairPal avg $737-1,600+/yr)',
+  minivan:'Minivan (Sienna/Pacifica — RepairPal avg $547-571/yr)',
+};
+
+let residuals    = { A:[...PRESETS.mainSed], B:[...PRESETS.mainSed] };
+let activePreset = { A:'mainSed', B:'mainSed' };
+let finMode      = { A:'loan', B:'loan' };
+let activeYrs    = 5;
 
 // ── Dep table ─────────────────────────────────────────────────────────────────
 function buildDepTable(car) {
@@ -452,10 +496,18 @@ function buildDepTable(car) {
 
 function setPreset(car,preset) {
   residuals[car]=[...PRESETS[preset]];
+  activePreset[car]=preset;
   buildDepTable(car);
   document.querySelectorAll(`#dp${car} .dp`).forEach(b=>{
     b.classList.toggle('on', b.getAttribute('onclick').includes(`'${preset}'`));
   });
+  // Update the cost basis note
+  const m=MAINT_BY_TYPE[preset], r=REPAIR_BY_TYPE[preset];
+  const note=document.getElementById('costNote'+car);
+  if(note) note.innerHTML=
+    `<strong>Maintenance base</strong> (yr 1/5/10): $${m[0].toLocaleString()} / $${m[4].toLocaleString()} / $${m[9].toLocaleString()}<br>`+
+    `<strong>Repair base</strong> (yr 4/6/10): $${r[3].toLocaleString()} / $${r[5].toLocaleString()} / $${r[9].toLocaleString()}<br>`+
+    `Source: ${PRESET_LABELS[preset]}`;
   recalc();
 }
 
@@ -580,10 +632,12 @@ function calcCar(car,yrs) {
     const dep=mode==='lease'?0:(mv[y-1]-mv[y]);
     const fin=mode==='lease'?leaseYrCost(y):(intByYr[y]||0);
     const ins=insBase*Math.pow(1-insDec,y-1);
-    // Maintenance: leases still require scheduled maintenance (oil, tires, etc.)
-    // Repairs: $0 for leases (returned before major repairs needed; warranty covers)
-    const maint=MAINT[y-1]*mmul;
-    const repair=mode==='lease'?0:REPAIR[y-1]*rmul;
+    // Maintenance: type-specific base costs (luxury cars cost far more to service than mainstream)
+    // Repairs: $0 for leases (returned within warranty window); type-specific for purchases
+    const maintBase=MAINT_BY_TYPE[activePreset[car]]||MAINT_BY_TYPE.mainSed;
+    const repairBase=REPAIR_BY_TYPE[activePreset[car]]||REPAIR_BY_TYPE.mainSed;
+    const maint=maintBase[y-1]*mmul;
+    const repair=mode==='lease'?0:repairBase[y-1]*rmul;
     const fuel=(annMi/mpg)*fuelPx;
     const credits=y===1?(fedCr+stateCr):0;
     const taxes=y===1?(price*taxR+regF-credits):regF;
@@ -728,6 +782,15 @@ function recalc(){
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildDepTable('A'); buildDepTable('B');
+// Populate cost notes with default preset (mainSed)
+['A','B'].forEach(car=>{
+  const p='mainSed', m=MAINT_BY_TYPE[p], r=REPAIR_BY_TYPE[p];
+  const note=document.getElementById('costNote'+car);
+  if(note) note.innerHTML=
+    `<strong>Maintenance base</strong> (yr 1/5/10): $${m[0].toLocaleString()} / $${m[4].toLocaleString()} / $${m[9].toLocaleString()}<br>`+
+    `<strong>Repair base</strong> (yr 4/6/10): $${r[3].toLocaleString()} / $${r[5].toLocaleString()} / $${r[9].toLocaleString()}<br>`+
+    `Source: ${PRESET_LABELS[p]}`;
+});
 buildPills();
 ['A','B'].forEach(car=>{
   ['Loan','Cash','Lease'].forEach(m=>{
