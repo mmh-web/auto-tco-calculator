@@ -703,13 +703,18 @@ function calcCar(car, years) {
   const stateCredit = fuelType === 'ev' ? g('stateCredit'+car) : 0;
   const mode      = financeMode[car];
 
-  // Market value curve: MSRP-based, scaled by (price/MSRP) so basis = purchase price
-  const scaleFactor = msrp > 0 ? price / msrp : 1;
+  // Market value curve:
+  // Year 0 = purchase price (your actual cost basis).
+  // Year 1+ = MSRP × cumulative residual factors — the used-car market prices the
+  // vehicle based on model/trim, not what any individual paid. Buying below MSRP
+  // is a one-time savings that lowers your basis; subsequent market values are
+  // MSRP-anchored regardless of your deal.
+  // Depreciation cost each year = value(start of year) − value(end of year).
   const marketVal = [price]; // index 0 = your purchase price
   let mv = msrp;
   for (let y = 1; y <= 10; y++) {
     mv *= (1 - depRates[car][y-1] / 100);
-    marketVal.push(mv * scaleFactor);
+    marketVal.push(mv);
   }
 
   // Financing costs
