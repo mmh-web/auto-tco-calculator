@@ -194,6 +194,14 @@ tr.diff-hdr td{background:rgba(5,150,105,.05);color:var(--grn);font-size:10px;fo
       <div class="ch"><div class="ci ci-a">🚗</div><h2>Vehicle Details</h2></div>
       <div class="cb">
         <div class="fg">
+          <div class="fg-1">
+            <label>Make &amp; Model <span style="font-weight:400;font-style:italic;color:var(--txt3)">— auto-fills type, MPG, MSRP estimate</span></label>
+            <div style="display:flex;gap:6px">
+              <select id="makeA" onchange="updateMake('A')" style="flex:1"><option value="">— Make —</option></select>
+              <select id="modelA" onchange="applyModel('A')" style="flex:1.4" disabled><option value="">— Model —</option></select>
+            </div>
+            <div class="fh" id="modelHintA" style="min-height:14px"></div>
+          </div>
           <div class="fg-1"><label>Name / Description</label><input type="text" id="nameA" value="2026 Toyota Camry XSE" oninput="recalc()"></div>
           <div>
             <label>MSRP — sticker price</label>
@@ -297,6 +305,14 @@ tr.diff-hdr td{background:rgba(5,150,105,.05);color:var(--grn);font-size:10px;fo
       <div class="ch"><div class="ci ci-b">🚗</div><h2>Vehicle Details</h2></div>
       <div class="cb">
         <div class="fg">
+          <div class="fg-1">
+            <label>Make &amp; Model <span style="font-weight:400;font-style:italic;color:var(--txt3)">— auto-fills type, MPG, MSRP estimate</span></label>
+            <div style="display:flex;gap:6px">
+              <select id="makeB" onchange="updateMake('B')" style="flex:1"><option value="">— Make —</option></select>
+              <select id="modelB" onchange="applyModel('B')" style="flex:1.4" disabled><option value="">— Model —</option></select>
+            </div>
+            <div class="fh" id="modelHintB" style="min-height:14px"></div>
+          </div>
           <div class="fg-1"><label>Name / Description</label><input type="text" id="nameB" value="2026 Honda Accord Sport" oninput="recalc()"></div>
           <div><label>MSRP — sticker price</label><input type="number" id="msrpB" value="32000" step="500" oninput="recalc()"><div class="fh">Drives the depreciation curve</div></div>
           <div><label>Your Purchase Price</label><input type="number" id="priceB" value="30000" step="500" oninput="recalc()"><div class="fh">What you actually pay</div></div>
@@ -473,6 +489,401 @@ const PRESET_LABELS = {
   sports: 'Sports Car (Porsche 911/Corvette — RepairPal avg $737-1,600+/yr)',
   minivan:'Minivan (Sienna/Pacifica — RepairPal avg $547-571/yr)',
 };
+
+// ── Make / Model database ─────────────────────────────────────────────────────
+// preset  = depreciation+maintenance category
+// msrp    = base trim MSRP (2025-26 MY), rounded to nearest $500
+// mpg     = EPA combined MPG (gas/hybrid) or mi/kWh (EV)
+// fuel    = 'gas' | 'hybrid' | 'ev'
+// All values are estimates; trim/config vary. User overrides everything.
+const CAR_DB = {
+  Toyota: {
+    Camry:           {preset:'mainSed', msrp:28500, mpg:32,  fuel:'gas'},
+    'Camry Hybrid':  {preset:'mainSed', msrp:31000, mpg:51,  fuel:'hybrid'},
+    Corolla:         {preset:'mainSed', msrp:22500, mpg:32,  fuel:'gas'},
+    'Corolla Hybrid':{preset:'mainSed', msrp:24000, mpg:52,  fuel:'hybrid'},
+    Prius:           {preset:'mainSed', msrp:28500, mpg:57,  fuel:'hybrid'},
+    'RAV4':          {preset:'mainSuv', msrp:30500, mpg:27,  fuel:'gas'},
+    'RAV4 Hybrid':   {preset:'mainSuv', msrp:34500, mpg:38,  fuel:'hybrid'},
+    'RAV4 Prime':    {preset:'mainSuv', msrp:43500, mpg:42,  fuel:'hybrid'},
+    Highlander:      {preset:'mainSuv', msrp:39500, mpg:24,  fuel:'gas'},
+    'Highlander Hybrid':{preset:'mainSuv', msrp:43000, mpg:36, fuel:'hybrid'},
+    '4Runner':       {preset:'mainSuv', msrp:41000, mpg:17,  fuel:'gas'},
+    Tacoma:          {preset:'truck',   msrp:32000, mpg:22,  fuel:'gas'},
+    Tundra:          {preset:'truck',   msrp:38500, mpg:18,  fuel:'gas'},
+    'Tundra Hybrid': {preset:'truck',   msrp:53000, mpg:22,  fuel:'hybrid'},
+    Sienna:          {preset:'minivan', msrp:38500, mpg:36,  fuel:'hybrid'},
+    'GR86':          {preset:'sports',  msrp:32000, mpg:27,  fuel:'gas'},
+    'GR Supra':      {preset:'sports',  msrp:57000, mpg:24,  fuel:'gas'},
+    Sequoia:         {preset:'mainSuv', msrp:60000, mpg:19,  fuel:'hybrid'},
+    'bZ4X':          {preset:'ev',      msrp:43000, mpg:3.7, fuel:'ev'},
+    'Crown':         {preset:'mainSed', msrp:41000, mpg:41,  fuel:'hybrid'},
+  },
+  Honda: {
+    Accord:          {preset:'mainSed', msrp:29000, mpg:32,  fuel:'gas'},
+    'Accord Hybrid': {preset:'mainSed', msrp:32000, mpg:46,  fuel:'hybrid'},
+    Civic:           {preset:'mainSed', msrp:24500, mpg:36,  fuel:'gas'},
+    'CR-V':          {preset:'mainSuv', msrp:32000, mpg:30,  fuel:'gas'},
+    'CR-V Hybrid':   {preset:'mainSuv', msrp:35500, mpg:40,  fuel:'hybrid'},
+    'HR-V':          {preset:'mainSuv', msrp:25500, mpg:31,  fuel:'gas'},
+    Pilot:           {preset:'mainSuv', msrp:40500, mpg:22,  fuel:'gas'},
+    Passport:        {preset:'mainSuv', msrp:39000, mpg:21,  fuel:'gas'},
+    Ridgeline:       {preset:'truck',   msrp:39500, mpg:21,  fuel:'gas'},
+    Odyssey:         {preset:'minivan', msrp:38500, mpg:22,  fuel:'gas'},
+    Prologue:        {preset:'ev',      msrp:47500, mpg:3.0, fuel:'ev'},
+  },
+  Ford: {
+    'F-150':         {preset:'truck',   msrp:36000, mpg:20,  fuel:'gas'},
+    'F-150 Hybrid':  {preset:'truck',   msrp:43000, mpg:25,  fuel:'hybrid'},
+    'F-150 Lightning':{preset:'ev',     msrp:55000, mpg:2.2, fuel:'ev'},
+    Mustang:         {preset:'sports',  msrp:32500, mpg:24,  fuel:'gas'},
+    'Mustang Mach-E':{preset:'ev',      msrp:43000, mpg:3.0, fuel:'ev'},
+    Explorer:        {preset:'mainSuv', msrp:40500, mpg:22,  fuel:'gas'},
+    Escape:          {preset:'mainSuv', msrp:30000, mpg:30,  fuel:'gas'},
+    Bronco:          {preset:'mainSuv', msrp:38500, mpg:20,  fuel:'gas'},
+    'Bronco Sport':  {preset:'mainSuv', msrp:30500, mpg:26,  fuel:'gas'},
+    Maverick:        {preset:'truck',   msrp:24000, mpg:37,  fuel:'hybrid'},
+    Ranger:          {preset:'truck',   msrp:33000, mpg:23,  fuel:'gas'},
+    Expedition:      {preset:'mainSuv', msrp:58000, mpg:17,  fuel:'gas'},
+    Edge:            {preset:'mainSuv', msrp:37000, mpg:24,  fuel:'gas'},
+  },
+  Chevrolet: {
+    Silverado:       {preset:'truck',   msrp:37500, mpg:19,  fuel:'gas'},
+    'Silverado EV':  {preset:'ev',      msrp:52000, mpg:2.4, fuel:'ev'},
+    Colorado:        {preset:'truck',   msrp:31000, mpg:22,  fuel:'gas'},
+    Equinox:         {preset:'mainSuv', msrp:30500, mpg:28,  fuel:'gas'},
+    'Equinox EV':    {preset:'ev',      msrp:35000, mpg:3.4, fuel:'ev'},
+    Traverse:        {preset:'mainSuv', msrp:37500, mpg:22,  fuel:'gas'},
+    Blazer:          {preset:'mainSuv', msrp:35000, mpg:25,  fuel:'gas'},
+    Tahoe:           {preset:'mainSuv', msrp:56000, mpg:16,  fuel:'gas'},
+    Suburban:        {preset:'mainSuv', msrp:59500, mpg:16,  fuel:'gas'},
+    Corvette:        {preset:'sports',  msrp:67500, mpg:19,  fuel:'gas'},
+    'Bolt EV':       {preset:'ev',      msrp:27500, mpg:3.5, fuel:'ev'},
+    Trailblazer:     {preset:'mainSuv', msrp:23000, mpg:29,  fuel:'gas'},
+    Malibu:          {preset:'mainSed', msrp:24500, mpg:29,  fuel:'gas'},
+  },
+  GMC: {
+    Sierra:          {preset:'truck',   msrp:40000, mpg:19,  fuel:'gas'},
+    'Sierra EV':     {preset:'ev',      msrp:54000, mpg:2.2, fuel:'ev'},
+    Canyon:          {preset:'truck',   msrp:33000, mpg:22,  fuel:'gas'},
+    Terrain:         {preset:'mainSuv', msrp:32500, mpg:28,  fuel:'gas'},
+    Acadia:          {preset:'mainSuv', msrp:39000, mpg:22,  fuel:'gas'},
+    Yukon:           {preset:'mainSuv', msrp:58500, mpg:16,  fuel:'gas'},
+    Envoy:           {preset:'mainSuv', msrp:35500, mpg:28,  fuel:'gas'},
+  },
+  RAM: {
+    '1500':          {preset:'truck',   msrp:38500, mpg:20,  fuel:'gas'},
+    '2500':          {preset:'truck',   msrp:48500, mpg:15,  fuel:'gas'},
+    'ProMaster Van': {preset:'minivan', msrp:40000, mpg:18,  fuel:'gas'},
+  },
+  Jeep: {
+    Wrangler:        {preset:'mainSuv', msrp:33000, mpg:22,  fuel:'gas'},
+    'Grand Cherokee':{preset:'mainSuv', msrp:39000, mpg:23,  fuel:'gas'},
+    Cherokee:        {preset:'mainSuv', msrp:30000, mpg:25,  fuel:'gas'},
+    Compass:         {preset:'mainSuv', msrp:28500, mpg:26,  fuel:'gas'},
+    Gladiator:       {preset:'truck',   msrp:38000, mpg:22,  fuel:'gas'},
+    Wagoneer:        {preset:'luxSuv',  msrp:61000, mpg:18,  fuel:'gas'},
+    'Grand Wagoneer':{preset:'luxSuv',  msrp:90000, mpg:16,  fuel:'gas'},
+  },
+  Dodge: {
+    Charger:         {preset:'mainSed', msrp:35000, mpg:20,  fuel:'gas'},
+    Challenger:      {preset:'sports',  msrp:35500, mpg:20,  fuel:'gas'},
+    Durango:         {preset:'mainSuv', msrp:39000, mpg:18,  fuel:'gas'},
+    Hornet:          {preset:'mainSuv', msrp:30500, mpg:24,  fuel:'gas'},
+  },
+  Chrysler: {
+    Pacifica:        {preset:'minivan', msrp:39000, mpg:22,  fuel:'gas'},
+    'Pacifica PHEV': {preset:'minivan', msrp:47000, mpg:32,  fuel:'hybrid'},
+    '300':           {preset:'mainSed', msrp:35000, mpg:22,  fuel:'gas'},
+  },
+  BMW: {
+    '2 Series':      {preset:'luxSed',  msrp:38500, mpg:28,  fuel:'gas'},
+    '3 Series':      {preset:'luxSed',  msrp:45500, mpg:26,  fuel:'gas'},
+    '4 Series':      {preset:'luxSed',  msrp:51000, mpg:26,  fuel:'gas'},
+    '5 Series':      {preset:'luxSed',  msrp:57000, mpg:25,  fuel:'gas'},
+    '7 Series':      {preset:'luxSed',  msrp:96000, mpg:22,  fuel:'gas'},
+    X1:              {preset:'luxSuv',  msrp:39500, mpg:27,  fuel:'gas'},
+    X3:              {preset:'luxSuv',  msrp:49000, mpg:25,  fuel:'gas'},
+    X5:              {preset:'luxSuv',  msrp:66000, mpg:23,  fuel:'gas'},
+    X7:              {preset:'luxSuv',  msrp:82000, mpg:21,  fuel:'gas'},
+    M3:              {preset:'sports',  msrp:76000, mpg:19,  fuel:'gas'},
+    M4:              {preset:'sports',  msrp:76000, mpg:19,  fuel:'gas'},
+    M5:              {preset:'sports',  msrp:111000,mpg:17,  fuel:'gas'},
+    i4:              {preset:'ev',      msrp:57500, mpg:3.5, fuel:'ev'},
+    i5:              {preset:'ev',      msrp:68000, mpg:3.0, fuel:'ev'},
+    iX:              {preset:'ev',      msrp:89000, mpg:2.7, fuel:'ev'},
+  },
+  'Mercedes-Benz': {
+    'C-Class':       {preset:'luxSed',  msrp:49000, mpg:25,  fuel:'gas'},
+    'E-Class':       {preset:'luxSed',  msrp:58500, mpg:24,  fuel:'gas'},
+    'S-Class':       {preset:'luxSed',  msrp:116000,mpg:22,  fuel:'gas'},
+    CLA:             {preset:'luxSed',  msrp:42500, mpg:27,  fuel:'gas'},
+    GLC:             {preset:'luxSuv',  msrp:51000, mpg:24,  fuel:'gas'},
+    GLE:             {preset:'luxSuv',  msrp:66000, mpg:22,  fuel:'gas'},
+    GLS:             {preset:'luxSuv',  msrp:91000, mpg:19,  fuel:'gas'},
+    'G-Class':       {preset:'luxSuv',  msrp:142000,mpg:14,  fuel:'gas'},
+    'AMG GT':        {preset:'sports',  msrp:131000,mpg:18,  fuel:'gas'},
+    EQS:             {preset:'ev',      msrp:106000,mpg:3.0, fuel:'ev'},
+    EQB:             {preset:'ev',      msrp:56000, mpg:2.9, fuel:'ev'},
+    EQE:             {preset:'ev',      msrp:76000, mpg:3.1, fuel:'ev'},
+  },
+  Audi: {
+    A3:              {preset:'luxSed',  msrp:38000, mpg:28,  fuel:'gas'},
+    A4:              {preset:'luxSed',  msrp:43500, mpg:25,  fuel:'gas'},
+    A6:              {preset:'luxSed',  msrp:57000, mpg:24,  fuel:'gas'},
+    A7:              {preset:'luxSed',  msrp:72000, mpg:23,  fuel:'gas'},
+    A8:              {preset:'luxSed',  msrp:91000, mpg:22,  fuel:'gas'},
+    Q3:              {preset:'luxSuv',  msrp:39500, mpg:27,  fuel:'gas'},
+    Q5:              {preset:'luxSuv',  msrp:47000, mpg:25,  fuel:'gas'},
+    Q7:              {preset:'luxSuv',  msrp:59000, mpg:22,  fuel:'gas'},
+    Q8:              {preset:'luxSuv',  msrp:73000, mpg:20,  fuel:'gas'},
+    'e-tron / Q8 e-tron':{preset:'ev', msrp:74000, mpg:2.5, fuel:'ev'},
+    'e-tron GT':     {preset:'ev',      msrp:108000,mpg:2.7, fuel:'ev'},
+    'Q4 e-tron':     {preset:'ev',      msrp:46000, mpg:3.0, fuel:'ev'},
+    RS5:             {preset:'sports',  msrp:76000, mpg:20,  fuel:'gas'},
+    RS7:             {preset:'sports',  msrp:120000,mpg:18,  fuel:'gas'},
+    TT:              {preset:'sports',  msrp:51000, mpg:25,  fuel:'gas'},
+  },
+  Lexus: {
+    IS:              {preset:'luxSed',  msrp:40500, mpg:24,  fuel:'gas'},
+    ES:              {preset:'luxSed',  msrp:42500, mpg:27,  fuel:'gas'},
+    'ES Hybrid':     {preset:'luxSed',  msrp:46000, mpg:44,  fuel:'hybrid'},
+    LS:              {preset:'luxSed',  msrp:81000, mpg:19,  fuel:'gas'},
+    LC:              {preset:'sports',  msrp:99000, mpg:19,  fuel:'gas'},
+    NX:              {preset:'luxSuv',  msrp:42500, mpg:26,  fuel:'gas'},
+    'NX Hybrid':     {preset:'luxSuv',  msrp:46500, mpg:36,  fuel:'hybrid'},
+    RX:              {preset:'luxSuv',  msrp:48500, mpg:24,  fuel:'gas'},
+    'RX Hybrid':     {preset:'luxSuv',  msrp:53000, mpg:36,  fuel:'hybrid'},
+    GX:              {preset:'luxSuv',  msrp:61000, mpg:18,  fuel:'gas'},
+    LX:              {preset:'luxSuv',  msrp:91000, mpg:14,  fuel:'gas'},
+    RZ:              {preset:'ev',      msrp:56000, mpg:3.0, fuel:'ev'},
+  },
+  Acura: {
+    Integra:         {preset:'luxSed',  msrp:33500, mpg:29,  fuel:'gas'},
+    TLX:             {preset:'luxSed',  msrp:43500, mpg:25,  fuel:'gas'},
+    RDX:             {preset:'luxSuv',  msrp:43500, mpg:24,  fuel:'gas'},
+    MDX:             {preset:'luxSuv',  msrp:50500, mpg:21,  fuel:'gas'},
+    ZDX:             {preset:'ev',      msrp:64000, mpg:3.1, fuel:'ev'},
+  },
+  Infiniti: {
+    Q50:             {preset:'luxSed',  msrp:42500, mpg:22,  fuel:'gas'},
+    Q60:             {preset:'luxSed',  msrp:49000, mpg:20,  fuel:'gas'},
+    QX50:            {preset:'luxSuv',  msrp:41000, mpg:24,  fuel:'gas'},
+    QX60:            {preset:'luxSuv',  msrp:49000, mpg:22,  fuel:'gas'},
+    QX80:            {preset:'luxSuv',  msrp:71000, mpg:17,  fuel:'gas'},
+  },
+  Cadillac: {
+    CT4:             {preset:'luxSed',  msrp:38500, mpg:25,  fuel:'gas'},
+    CT5:             {preset:'luxSed',  msrp:41000, mpg:25,  fuel:'gas'},
+    XT4:             {preset:'luxSuv',  msrp:39000, mpg:25,  fuel:'gas'},
+    XT5:             {preset:'luxSuv',  msrp:47000, mpg:23,  fuel:'gas'},
+    XT6:             {preset:'luxSuv',  msrp:51000, mpg:21,  fuel:'gas'},
+    Escalade:        {preset:'luxSuv',  msrp:81000, mpg:15,  fuel:'gas'},
+    Lyriq:           {preset:'ev',      msrp:59000, mpg:2.9, fuel:'ev'},
+    Optiq:           {preset:'ev',      msrp:54000, mpg:3.2, fuel:'ev'},
+  },
+  Lincoln: {
+    Corsair:         {preset:'luxSuv',  msrp:40500, mpg:24,  fuel:'gas'},
+    Nautilus:        {preset:'luxSuv',  msrp:49000, mpg:22,  fuel:'gas'},
+    Aviator:         {preset:'luxSuv',  msrp:58000, mpg:20,  fuel:'gas'},
+    Navigator:       {preset:'luxSuv',  msrp:79000, mpg:16,  fuel:'gas'},
+  },
+  Genesis: {
+    G70:             {preset:'luxSed',  msrp:39000, mpg:24,  fuel:'gas'},
+    G80:             {preset:'luxSed',  msrp:51000, mpg:23,  fuel:'gas'},
+    G90:             {preset:'luxSed',  msrp:91000, mpg:19,  fuel:'gas'},
+    GV70:            {preset:'luxSuv',  msrp:44000, mpg:24,  fuel:'gas'},
+    GV80:            {preset:'luxSuv',  msrp:58000, mpg:22,  fuel:'gas'},
+    GV60:            {preset:'ev',      msrp:49000, mpg:3.3, fuel:'ev'},
+    'Electrified G80':{preset:'ev',     msrp:81000, mpg:2.9, fuel:'ev'},
+  },
+  Volvo: {
+    S60:             {preset:'luxSed',  msrp:43000, mpg:26,  fuel:'gas'},
+    S90:             {preset:'luxSed',  msrp:57000, mpg:24,  fuel:'gas'},
+    XC40:            {preset:'luxSuv',  msrp:43000, mpg:27,  fuel:'gas'},
+    XC60:            {preset:'luxSuv',  msrp:49000, mpg:25,  fuel:'gas'},
+    XC90:            {preset:'luxSuv',  msrp:59000, mpg:23,  fuel:'gas'},
+    'XC40 Recharge': {preset:'ev',      msrp:55000, mpg:3.2, fuel:'ev'},
+    EX30:            {preset:'ev',      msrp:36000, mpg:3.4, fuel:'ev'},
+    EX90:            {preset:'ev',      msrp:79000, mpg:2.9, fuel:'ev'},
+  },
+  Porsche: {
+    '911':           {preset:'sports',  msrp:116000,mpg:19,  fuel:'gas'},
+    'Boxster / 718': {preset:'sports',  msrp:63000, mpg:26,  fuel:'gas'},
+    Macan:           {preset:'luxSuv',  msrp:59000, mpg:23,  fuel:'gas'},
+    'Macan EV':      {preset:'ev',      msrp:75000, mpg:2.9, fuel:'ev'},
+    Cayenne:         {preset:'luxSuv',  msrp:73000, mpg:20,  fuel:'gas'},
+    Panamera:        {preset:'luxSed',  msrp:96000, mpg:21,  fuel:'gas'},
+    Taycan:          {preset:'ev',      msrp:91000, mpg:2.7, fuel:'ev'},
+  },
+  'Land Rover': {
+    Defender:        {preset:'luxSuv',  msrp:57000, mpg:19,  fuel:'gas'},
+    Discovery:       {preset:'luxSuv',  msrp:58000, mpg:20,  fuel:'gas'},
+    'Range Rover Sport':{preset:'luxSuv',msrp:79000,mpg:19,  fuel:'gas'},
+    'Range Rover':   {preset:'luxSuv',  msrp:106000,mpg:17,  fuel:'gas'},
+    'Range Rover Evoque':{preset:'luxSuv',msrp:47000,mpg:22, fuel:'gas'},
+  },
+  Tesla: {
+    'Model 3':       {preset:'ev',      msrp:43000, mpg:4.0, fuel:'ev'},
+    'Model 3 Long Range':{preset:'ev',  msrp:49000, mpg:3.8, fuel:'ev'},
+    'Model Y':       {preset:'ev',      msrp:47000, mpg:3.7, fuel:'ev'},
+    'Model Y Long Range':{preset:'ev',  msrp:53000, mpg:3.5, fuel:'ev'},
+    'Model S':       {preset:'ev',      msrp:80000, mpg:3.3, fuel:'ev'},
+    'Model X':       {preset:'ev',      msrp:90000, mpg:2.9, fuel:'ev'},
+    Cybertruck:      {preset:'ev',      msrp:81000, mpg:1.9, fuel:'ev'},
+  },
+  Rivian: {
+    R1T:             {preset:'ev',      msrp:70000, mpg:2.3, fuel:'ev'},
+    R1S:             {preset:'ev',      msrp:76000, mpg:2.2, fuel:'ev'},
+    R2:              {preset:'ev',      msrp:45000, mpg:3.2, fuel:'ev'},
+  },
+  Hyundai: {
+    Elantra:         {preset:'mainSed', msrp:22500, mpg:33,  fuel:'gas'},
+    'Elantra Hybrid':{preset:'mainSed', msrp:26000, mpg:52,  fuel:'hybrid'},
+    Sonata:          {preset:'mainSed', msrp:27500, mpg:31,  fuel:'gas'},
+    'Sonata Hybrid': {preset:'mainSed', msrp:31000, mpg:45,  fuel:'hybrid'},
+    Tucson:          {preset:'mainSuv', msrp:30500, mpg:26,  fuel:'gas'},
+    'Tucson Hybrid': {preset:'mainSuv', msrp:34000, mpg:38,  fuel:'hybrid'},
+    'Santa Fe':      {preset:'mainSuv', msrp:35500, mpg:25,  fuel:'gas'},
+    'Santa Fe Hybrid':{preset:'mainSuv',msrp:39000, mpg:36,  fuel:'hybrid'},
+    Palisade:        {preset:'mainSuv', msrp:38000, mpg:21,  fuel:'gas'},
+    'Ioniq 5':       {preset:'ev',      msrp:43500, mpg:3.5, fuel:'ev'},
+    'Ioniq 6':       {preset:'ev',      msrp:39500, mpg:4.0, fuel:'ev'},
+    'Ioniq 9':       {preset:'ev',      msrp:58000, mpg:3.1, fuel:'ev'},
+    'Kona Electric': {preset:'ev',      msrp:34500, mpg:3.6, fuel:'ev'},
+  },
+  Kia: {
+    K5:              {preset:'mainSed', msrp:26000, mpg:31,  fuel:'gas'},
+    Sportage:        {preset:'mainSuv', msrp:29000, mpg:27,  fuel:'gas'},
+    'Sportage Hybrid':{preset:'mainSuv',msrp:33000, mpg:38,  fuel:'hybrid'},
+    Sorento:         {preset:'mainSuv', msrp:34000, mpg:25,  fuel:'gas'},
+    Telluride:       {preset:'mainSuv', msrp:39000, mpg:21,  fuel:'gas'},
+    Stinger:         {preset:'sports',  msrp:38000, mpg:25,  fuel:'gas'},
+    Carnival:        {preset:'minivan', msrp:34500, mpg:24,  fuel:'gas'},
+    EV6:             {preset:'ev',      msrp:43500, mpg:3.7, fuel:'ev'},
+    EV9:             {preset:'ev',      msrp:56000, mpg:2.7, fuel:'ev'},
+    EV3:             {preset:'ev',      msrp:31000, mpg:3.9, fuel:'ev'},
+  },
+  Subaru: {
+    Impreza:         {preset:'mainSed', msrp:22500, mpg:28,  fuel:'gas'},
+    Legacy:          {preset:'mainSed', msrp:25500, mpg:29,  fuel:'gas'},
+    Crosstrek:       {preset:'mainSuv', msrp:24500, mpg:29,  fuel:'gas'},
+    'Crosstrek Hybrid':{preset:'mainSuv',msrp:37000,mpg:35,  fuel:'hybrid'},
+    Forester:        {preset:'mainSuv', msrp:28500, mpg:29,  fuel:'gas'},
+    Outback:         {preset:'mainSuv', msrp:29000, mpg:29,  fuel:'gas'},
+    Ascent:          {preset:'mainSuv', msrp:35500, mpg:21,  fuel:'gas'},
+    WRX:             {preset:'sports',  msrp:31000, mpg:23,  fuel:'gas'},
+    BRZ:             {preset:'sports',  msrp:30500, mpg:27,  fuel:'gas'},
+    Solterra:        {preset:'ev',      msrp:44000, mpg:3.7, fuel:'ev'},
+  },
+  Mazda: {
+    Mazda3:          {preset:'mainSed', msrp:24500, mpg:31,  fuel:'gas'},
+    Mazda6:          {preset:'mainSed', msrp:28000, mpg:28,  fuel:'gas'},
+    'CX-30':         {preset:'mainSuv', msrp:24500, mpg:28,  fuel:'gas'},
+    'CX-5':          {preset:'mainSuv', msrp:30000, mpg:28,  fuel:'gas'},
+    'CX-50':         {preset:'mainSuv', msrp:31500, mpg:27,  fuel:'gas'},
+    'CX-90':         {preset:'mainSuv', msrp:39500, mpg:24,  fuel:'gas'},
+    'MX-5 Miata':    {preset:'sports',  msrp:28500, mpg:36,  fuel:'gas'},
+    'MX-30':         {preset:'ev',      msrp:35000, mpg:2.9, fuel:'ev'},
+  },
+  Nissan: {
+    Sentra:          {preset:'mainSed', msrp:21500, mpg:33,  fuel:'gas'},
+    Altima:          {preset:'mainSed', msrp:26000, mpg:31,  fuel:'gas'},
+    'Kicks':         {preset:'mainSuv', msrp:22000, mpg:31,  fuel:'gas'},
+    Rogue:           {preset:'mainSuv', msrp:31000, mpg:30,  fuel:'gas'},
+    Murano:          {preset:'mainSuv', msrp:37000, mpg:22,  fuel:'gas'},
+    Pathfinder:      {preset:'mainSuv', msrp:37000, mpg:21,  fuel:'gas'},
+    Armada:          {preset:'mainSuv', msrp:54000, mpg:15,  fuel:'gas'},
+    Frontier:        {preset:'truck',   msrp:31000, mpg:23,  fuel:'gas'},
+    Titan:           {preset:'truck',   msrp:43000, mpg:17,  fuel:'gas'},
+    'Z':             {preset:'sports',  msrp:43000, mpg:22,  fuel:'gas'},
+    Leaf:            {preset:'ev',      msrp:29000, mpg:3.4, fuel:'ev'},
+    Ariya:           {preset:'ev',      msrp:45000, mpg:3.1, fuel:'ev'},
+  },
+  Volkswagen: {
+    Jetta:           {preset:'mainSed', msrp:22500, mpg:29,  fuel:'gas'},
+    Passat:          {preset:'mainSed', msrp:26000, mpg:27,  fuel:'gas'},
+    Tiguan:          {preset:'mainSuv', msrp:30500, mpg:24,  fuel:'gas'},
+    Atlas:           {preset:'mainSuv', msrp:38000, mpg:21,  fuel:'gas'},
+    'ID.4':          {preset:'ev',      msrp:40500, mpg:3.2, fuel:'ev'},
+    'ID.7':          {preset:'ev',      msrp:55000, mpg:3.3, fuel:'ev'},
+    'Golf GTI':      {preset:'sports',  msrp:32000, mpg:26,  fuel:'gas'},
+    'Golf R':        {preset:'sports',  msrp:47000, mpg:25,  fuel:'gas'},
+  },
+  Buick: {
+    Encore:          {preset:'mainSuv', msrp:24500, mpg:30,  fuel:'gas'},
+    'Encore GX':     {preset:'mainSuv', msrp:28000, mpg:28,  fuel:'gas'},
+    Envision:        {preset:'mainSuv', msrp:33000, mpg:26,  fuel:'gas'},
+    Enclave:         {preset:'mainSuv', msrp:44000, mpg:20,  fuel:'gas'},
+    Envista:         {preset:'mainSuv', msrp:23000, mpg:30,  fuel:'gas'},
+  },
+  Mitsubishi: {
+    Mirage:          {preset:'mainSed', msrp:17500, mpg:37,  fuel:'gas'},
+    Outlander:       {preset:'mainSuv', msrp:29000, mpg:25,  fuel:'gas'},
+    'Outlander PHEV':{preset:'mainSuv', msrp:38000, mpg:26,  fuel:'hybrid'},
+    Eclipse Cross:   {preset:'mainSuv', msrp:26000, mpg:27,  fuel:'gas'},
+    Galant:          {preset:'mainSed', msrp:26000, mpg:28,  fuel:'gas'},
+  },
+  Lucid: {
+    'Air Pure':      {preset:'ev',      msrp:70000, mpg:5.2, fuel:'ev'},
+    'Air Grand Touring':{preset:'ev',   msrp:139000,mpg:4.7, fuel:'ev'},
+    Gravity:         {preset:'ev',      msrp:95000, mpg:3.8, fuel:'ev'},
+  },
+};
+
+// ── Make/model selector functions ─────────────────────────────────────────────
+function initMakeDropdowns() {
+  const makes = Object.keys(CAR_DB).sort();
+  ['A','B'].forEach(car=>{
+    const sel=document.getElementById('make'+car);
+    makes.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+  });
+}
+
+function updateMake(car) {
+  const make=document.getElementById('make'+car).value;
+  const modelSel=document.getElementById('model'+car);
+  modelSel.innerHTML='<option value="">— Model —</option>';
+  document.getElementById('modelHint'+car).textContent='';
+  if(!make){modelSel.disabled=true;return;}
+  modelSel.disabled=false;
+  const models=Object.keys(CAR_DB[make]).sort();
+  models.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; modelSel.appendChild(o); });
+}
+
+function applyModel(car) {
+  const make=document.getElementById('make'+car).value;
+  const model=document.getElementById('model'+car).value;
+  if(!make||!model) return;
+  const d=CAR_DB[make][model];
+  if(!d) return;
+
+  // Auto-fill name
+  document.getElementById('name'+car).value=`${make} ${model}`;
+
+  // Auto-fill MSRP (user should override with actual price)
+  document.getElementById('msrp'+car).value=d.msrp;
+
+  // Auto-fill MPG
+  document.getElementById('mpg'+car).value=d.mpg;
+
+  // Auto-fill fuel type
+  const ftEl=document.getElementById('ft'+car);
+  ftEl.value=d.fuel||'gas';
+  if(car==='A') togEVA(); else togEVB();
+
+  // Auto-set depreciation + maintenance preset
+  setPreset(car, d.preset);
+
+  // Show hint
+  const PNAMES={mainSed:'Mainstream Sedan',mainSuv:'Mainstream SUV',truck:'Truck / Pickup',
+    luxSed:'Luxury Sedan',luxSuv:'Luxury SUV',ev:'Electric Vehicle',sports:'Sports Car',minivan:'Minivan'};
+  const mpgLabel=d.fuel==='ev'?`${d.mpg} mi/kWh`:`${d.mpg} MPG combined`;
+  document.getElementById('modelHint'+car).textContent=
+    `Base MSRP ~$${d.msrp.toLocaleString()} · ${mpgLabel} · ${PNAMES[d.preset]} — enter your actual negotiated price above`;
+
+  recalc();
+}
 
 let residuals    = { A:[...PRESETS.mainSed], B:[...PRESETS.mainSed] };
 let activePreset = { A:'mainSed', B:'mainSed' };
@@ -781,6 +1192,7 @@ function recalc(){
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+initMakeDropdowns();
 buildDepTable('A'); buildDepTable('B');
 // Populate cost notes with default preset (mainSed)
 ['A','B'].forEach(car=>{
