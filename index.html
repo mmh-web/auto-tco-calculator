@@ -141,8 +141,8 @@ tr.row-tot td{font-weight:700;font-size:13px;color:var(--txt);background:var(--s
 tr.row-tot td.ca{color:var(--blue)}
 tr.row-tot td.cb{color:var(--amb)}
 tr.row-mval td{color:var(--txt3);font-style:italic;font-size:11px}
-tr.row-eq td{color:var(--grn)}
-tr.row-net td{font-weight:600;color:var(--grn)}
+tr.row-lbal td{color:var(--red);font-style:italic;font-size:11px}
+tr.row-eq td{color:var(--grn);font-size:11px}
 tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:700;padding:7px 11px 5px;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
 
 .notes{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:16px 18px;margin-bottom:20px}
@@ -401,7 +401,8 @@ tr.diff-hdr td{background:var(--s1);color:var(--grn);font-size:10px;font-weight:
     <p><strong>Depreciation (typically 40–60% of total ownership cost):</strong> Modeled as "% of MSRP retained" at end of each year — the industry-standard format used by Edmunds, KBB, and ALG/JD Power. Year-0 cost basis = your purchase price. Years 1+ projected market value = MSRP × residual %. Buying below MSRP directly reduces your year-1 depreciation cost. Changing MSRP shifts the entire future value curve proportionally.</p>
     <p><strong>Depreciation presets — source: iSeeCars 2025–26 study (950,000+ real transactions):</strong> Mainstream sedan (Camry, Accord): 84%→55% retained yrs 1–5. Mainstream SUV (RAV4, CR-V): 88%→57%. Pickup truck (F-150, Ram): 87%→55%. Luxury sedan (BMW 5-series): 76%→41%. Luxury SUV (Lexus GX): 81%→48%. EV (Tesla Model 3): 78%→40% — high variance due to Tesla price cuts 2023–24. Sports car (Porsche 911, Corvette): 90%→67%. All values are editable.</p>
     <p><strong>Maintenance &amp; repairs:</strong> Base curves from AAA 2025 "Your Driving Costs" study and RepairPal aggregate data ($652/yr avg repairs). Combined costs: ~$1,000–$1,700/yr in years 1–5, rising to ~$2,800/yr by year 10. Multiply up for German luxury, down for Toyota/Honda reliability.</p>
-    <p><strong>Financing:</strong> Full amortization — only interest is a cost (principal is equity you recover when you sell). Lease cost = all monthly payments + CCR + acquisition fee + disposition fee + excess mileage. Leases have no residual equity.</p>
+    <p><strong>Why the TOTAL row = your net out-of-pocket cost if you sell:</strong> Depreciation = Purchase Price − Market Value (the value you lose). Total = Depreciation + Interest + Operating = (Price − MV) + I + Ops. Net cash cost if sold = all cash spent − net sale proceeds = (Price − MV) + I + Ops. These are identical — remaining loan balance cancels algebraically. So the TOTAL is your true net cost regardless of when in the loan you sell. The "Net Equity" sub-row shows what you'd actually pocket from selling (market value minus any loan payoff).</p>
+    <p><strong>Financing:</strong> Full amortization — only interest is a cost (principal is equity recovered at sale). The "Remaining Loan Balance" row shows what you'd need to pay off at each year if selling early. Lease cost = all monthly payments + CCR + acquisition + disposition + excess mileage. Leases have no residual equity.</p>
     <p><strong>Opportunity cost:</strong> Compound annual return on down payment cash invested instead of spent. Default 6% = approximate long-run equity market return above inflation.</p>
     <div class="src">Sources: iSeeCars.com (2025–26 depreciation study) · AAA Your Driving Costs 2025 · RepairPal.com aggregate data · Edmunds True Cost to Own methodology · JD Power ALG Residual Value Awards 2025 · BLS Automobile Consumption Study 2024 · CarEdge depreciation data</div>
   </div>
@@ -492,18 +493,25 @@ function buildPills() {
 function setYr(y){activeYrs=y;buildPills();recalc()}
 
 // ── Finance math ──────────────────────────────────────────────────────────────
-function loanIntByYear(principal,aprPct,termMo) {
+// Returns { intByYr, balByYr } — both indexed 1..10.
+// balByYr[y] = remaining principal balance at END of year y (0 once loan paid off).
+// Proof that Total cost row already = net cost if sold:
+//   Net cash cost = (Price − MV) + Interest + Operating  [loan balances cancel]
+//   Total row = Depreciation + Interest + Operating = (Price − MV) + Interest + Operating  ✓
+function loanCalc(principal,aprPct,termMo) {
   const r=(aprPct/100)/12;
   let pmt=0;
   if(principal>0&&r>0) pmt=principal*(r*Math.pow(1+r,termMo))/(Math.pow(1+r,termMo)-1);
   else if(principal>0) pmt=principal/termMo;
-  const by=Array(11).fill(0);
+  const intByYr=Array(11).fill(0), balByYr=Array(11).fill(0);
   let bal=principal;
   for(let m=1;m<=termMo;m++){
     const yr=Math.min(Math.ceil(m/12),10);
-    const i=bal*r; by[yr]+=i; bal=Math.max(0,bal-(pmt-i));
+    const i=bal*r; intByYr[yr]+=i; bal=Math.max(0,bal-(pmt-i));
+    // capture end-of-year balance (last month in each year wins)
+    balByYr[yr]=bal;
   }
-  return by;
+  return {intByYr,balByYr};
 }
 
 function leaseMonthly(capCost,msrp,resPct,mf,termMo) {
@@ -534,11 +542,13 @@ function calcCar(car,yrs) {
   const mv=[price];
   for(let y=1;y<=10;y++) mv.push(msrp*(residuals[car][y-1]/100));
 
-  let intByYr=Array(11).fill(0), cashOut=0, lMo=0, lTermMo=0, lExMi=0;
+  let intByYr=Array(11).fill(0), balByYr=Array(11).fill(0);
+  let cashOut=0, lMo=0, lTermMo=0, lExMi=0;
   if(mode==='loan'){
     const dp=g('dp'+car),apr=g('apr'+car),tm=gi('term'+car);
     cashOut=dp;
-    intByYr=loanIntByYear(price-dp,apr,tm);
+    const lc=loanCalc(price-dp,apr,tm);
+    intByYr=lc.intByYr; balByYr=lc.balByYr;
   } else if(mode==='cash'){
     cashOut=price;
   } else {
@@ -570,7 +580,9 @@ function calcCar(car,yrs) {
     const dep=mode==='lease'?0:(mv[y-1]-mv[y]);
     const fin=mode==='lease'?leaseYrCost(y):(intByYr[y]||0);
     const ins=insBase*Math.pow(1-insDec,y-1);
-    const maint=MAINT[y-1]*mmul*(mode==='lease'?0.5:1);
+    // Maintenance: leases still require scheduled maintenance (oil, tires, etc.)
+    // Repairs: $0 for leases (returned before major repairs needed; warranty covers)
+    const maint=MAINT[y-1]*mmul;
     const repair=mode==='lease'?0:REPAIR[y-1]*rmul;
     const fuel=(annMi/mpg)*fuelPx;
     const credits=y===1?(fedCr+stateCr):0;
@@ -578,7 +590,9 @@ function calcCar(car,yrs) {
     const opp=oppByYr[y-1];
     const ldisp=(mode==='lease'&&y===Math.ceil(lTermMo/12))?(g('ldisp'+car)+lExMi):0;
     const total=dep+fin+ins+maint+repair+fuel+taxes+opp+ldisp;
-    rows.push({y,dep,fin,ins,maint,repair,fuel,taxes,opp,ldisp,total,mval:mv[y]});
+    // loanBal = remaining principal owed at end of this year (0 for cash/lease)
+    const loanBal=mode==='loan'?(balByYr[y]||0):0;
+    rows.push({y,dep,fin,ins,maint,repair,fuel,taxes,opp,ldisp,total,mval:mv[y],loanBal});
   }
   return {rows,mv,name:document.getElementById('name'+car).value||'Vehicle '+car,mode};
 }
@@ -649,20 +663,31 @@ function renderTable(rA,rB,yrs){
       s+=`<td${isT?` class="${cc}"`:''}><strong>${$(rt)}</strong></td></tr>`;
     });
     if(r.mode!=='lease'){
-      s+=`<tr class="row-mval"><td>→ Projected Market Value (MSRP×residual%)</td>`;
+      // Projected Market Value — MSRP × residual% at end of each year
+      s+=`<tr class="row-mval"><td>↳ Projected Market Value</td>`;
       r.rows.forEach(row=>{s+=`<td>${$(row.mval)}</td>`;});
       s+=`<td>${$(r.rows[r.rows.length-1]?.mval||0)}</td></tr>`;
-      s+=`<tr class="row-eq"><td>→ Residual Equity at Sale</td>`;
-      r.rows.forEach(row=>{s+=`<td>${$(row.mval)}</td>`;});
-      s+=`<td><strong>${$(r.rows[r.rows.length-1]?.mval||0)}</strong></td></tr>`;
-      const totC=r.rows.reduce((a,rr)=>a+rr.total,0);
-      const lastEq=r.rows[r.rows.length-1]?.mval||0;
-      s+=`<tr class="row-net"><td>→ Net Cost If Sold (Total − Equity)</td>`;
-      r.rows.forEach((row,i)=>{
-        const cum=r.rows.slice(0,i+1).reduce((a,rr)=>a+rr.total,0);
-        s+=`<td>${$(cum-row.mval)}</td>`;
+
+      // Remaining Loan Balance — what you'd still owe if selling at this year
+      if(r.mode==='loan'){
+        s+=`<tr class="row-lbal"><td>↳ Remaining Loan Balance</td>`;
+        r.rows.forEach(row=>{s+=`<td>${row.loanBal>0?'('+$(row.loanBal)+')':'—'}</td>`;});
+        s+=`<td>—</td></tr>`;
+      }
+
+      // Net Equity = Market Value − Loan Balance = actual proceeds from selling
+      s+=`<tr class="row-eq"><td>↳ Net Equity If Sold (Value − Loan)</td>`;
+      r.rows.forEach(row=>{
+        const eq=row.mval-row.loanBal;
+        s+=`<td>${$(eq)}</td>`;
       });
-      s+=`<td><strong>${$(totC-lastEq)}</strong></td></tr>`;
+      const lastEq=(r.rows[r.rows.length-1]?.mval||0)-(r.rows[r.rows.length-1]?.loanBal||0);
+      s+=`<td><strong>${$(lastEq)}</strong></td></tr>`;
+
+      // NOTE: The TOTAL row already equals net out-of-pocket cost if sold.
+      // Proof: Total = Depreciation + Interest + Operating = (Price − MV) + I + Ops
+      //        Net cash cost = (Price − MV) + I + Ops  [loan balances cancel algebraically]
+      // So Total ≠ "Total minus equity" — that would double-subtract the car's value.
     }
     return s;
   };
