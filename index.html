@@ -4,967 +4,1415 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>True Cost to Own — Auto Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #222535;
-    --border: #2e3147;
-    --accent: #4f8ef7;
-    --accent2: #f7a34f;
-    --green: #4caf82;
-    --red: #e05c5c;
-    --text: #e8eaf0;
-    --muted: #7b80a0;
-    --radius: 10px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+/* ── Tokens ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:         #080a10;
+  --s1:         #0f1219;
+  --s2:         #151922;
+  --s3:         #1c2030;
+  --s4:         #222840;
+  --bdr:        rgba(255,255,255,.07);
+  --bdr2:       rgba(255,255,255,.12);
+  --txt:        #eef0f8;
+  --txt2:       #8891b0;
+  --txt3:       #515a78;
+  --blue:       #4d8bf5;
+  --blue-dim:   rgba(77,139,245,.12);
+  --blue-glow:  rgba(77,139,245,.3);
+  --amber:      #f5a623;
+  --amber-dim:  rgba(245,166,35,.1);
+  --amber-glow: rgba(245,166,35,.3);
+  --green:      #2dd4bf;
+  --green-dim:  rgba(45,212,191,.1);
+  --red:        #f87171;
+  --purple:     #a78bfa;
+  --r:          10px;
+  --r-sm:       6px;
+}
 
-  h1 { font-size: 22px; font-weight: 700; }
-  h2 { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
-  h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+/* ── Reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
 
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  header .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+/* ── Sticky comparison bar ───────────────────────────────────────────── */
+#compBar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,10,16,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bdr);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 0;
+  height: 56px;
+}
+#compBar .logo {
+  font-size: 14px; font-weight: 700;
+  color: var(--txt); white-space: nowrap;
+  padding-right: 20px; border-right: 1px solid var(--bdr);
+  margin-right: 20px;
+}
+#compBar .logo span { color: var(--blue); }
+.comp-vehicle {
+  flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0;
+}
+.comp-vehicle .dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-a { background: var(--blue); box-shadow: 0 0 8px var(--blue-glow); }
+.dot-b { background: var(--amber); box-shadow: 0 0 8px var(--amber-glow); }
+.comp-vehicle .name {
+  font-size: 12px; color: var(--txt2); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.comp-vehicle .total {
+  font-size: 16px; font-weight: 700; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.comp-vehicle .total.a { color: var(--blue); }
+.comp-vehicle .total.b { color: var(--amber); }
+.comp-vs {
+  padding: 0 16px;
+  font-size: 11px; font-weight: 600; color: var(--txt3); text-transform: uppercase; letter-spacing: .1em;
+}
+.comp-savings {
+  padding-left: 20px; border-left: 1px solid var(--bdr); margin-left: 4px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
+}
+.comp-savings .label { font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .08em; }
+.comp-savings .amount { font-size: 14px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
 
-  .layout { display: grid; grid-template-columns: 420px 1fr; gap: 1px; background: var(--border); min-height: calc(100vh - 53px); }
-  .pane { background: var(--bg); padding: 18px; overflow-y: auto; }
-  .pane.results { background: var(--surface); padding: 22px; }
+/* year pill row in comp bar */
+.year-pills {
+  display: flex; gap: 4px; margin-left: 20px;
+  padding-left: 20px; border-left: 1px solid var(--bdr);
+}
+.year-pill {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--bdr); background: transparent;
+  color: var(--txt3); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
+}
+.year-pill:hover { border-color: var(--blue); color: var(--blue); }
+.year-pill.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 
-  .car-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
-  .car-tab { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 500; transition: all .15s; }
-  .car-tab.active-a { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,.1); }
-  .car-tab.active-b { border-color: var(--accent2); color: var(--accent2); background: rgba(247,163,79,.1); }
+/* ── Body layout ─────────────────────────────────────────────────────── */
+.body { display: flex; gap: 0; height: calc(100vh - 56px); overflow: hidden; }
+.left-pane {
+  width: 400px; min-width: 360px; max-width: 440px;
+  background: var(--s1); border-right: 1px solid var(--bdr);
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--s4) transparent;
+}
+.right-pane {
+  flex: 1; overflow-y: auto;
+  background: var(--bg);
+  scrollbar-width: thin; scrollbar-color: var(--s4) transparent;
+}
 
-  .section { margin-bottom: 16px; padding: 14px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
-  .section.accent-border-a { border-left: 3px solid var(--accent); }
-  .section.accent-border-b { border-left: 3px solid var(--accent2); }
+/* ── Left pane ───────────────────────────────────────────────────────── */
+.left-pane-inner { padding: 20px; }
 
-  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-  .field-full { grid-column: 1 / -1; }
-  .field-grid .hint { font-size: 11px; color: #555b7a; margin-top: 3px; }
+/* Vehicle toggle */
+.vehicle-toggle {
+  display: flex; background: var(--s2); border-radius: 8px;
+  padding: 3px; gap: 3px; margin-bottom: 20px;
+}
+.vtab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 12px; border-radius: 6px; border: none;
+  background: transparent; color: var(--txt2); cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  transition: all .18s;
+}
+.vtab .vdot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.vtab.active-a { background: var(--s4); color: var(--blue); }
+.vtab.active-b { background: var(--s4); color: var(--amber); }
 
-  label { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; font-weight: 500; }
+/* Section cards */
+.card {
+  background: var(--s2); border: 1px solid var(--bdr);
+  border-radius: var(--r); margin-bottom: 12px; overflow: hidden;
+}
+.card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 12px; cursor: default;
+}
+.card-header.collapsible { cursor: pointer; user-select: none; }
+.card-header.collapsible:hover { background: var(--s3); }
+.card-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.icon-a { background: var(--blue-dim); }
+.icon-b { background: var(--amber-dim); }
+.icon-green { background: var(--green-dim); }
+.icon-neutral { background: rgba(255,255,255,.05); }
+.card-header h2 {
+  font-size: 13px; font-weight: 600; color: var(--txt); flex: 1;
+  margin: 0; line-height: 1.2;
+}
+.card-header .chevron {
+  font-size: 10px; color: var(--txt3); transition: transform .2s;
+}
+.card-header.open .chevron { transform: rotate(180deg); }
+.card-body { padding: 0 16px 16px; }
+.card-body.collapsible-body { display: none; padding-top: 0; }
+.card-body.collapsible-body.open { display: block; }
 
-  input[type=number], input[type=text], select {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 6px 9px; font-size: 13px; outline: none; appearance: none;
-    transition: border-color .15s;
-  }
-  input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); }
-  input[type=checkbox] { accent-color: var(--accent); }
+/* Section divider */
+.divider { height: 1px; background: var(--bdr); margin: 12px 0; }
 
-  .finance-tabs { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
-  .finance-tab { flex: 1; padding: 6px; font-size: 12px; font-weight: 500; text-align: center; border: none; background: var(--surface2); color: var(--muted); cursor: pointer; transition: all .15s; }
-  .finance-tab.active { background: var(--accent); color: #fff; }
+/* Field grid */
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fg-full { grid-column: 1/-1; }
 
-  input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-  .range-row { display: flex; align-items: center; gap: 10px; }
-  .range-val { min-width: 30px; text-align: right; font-weight: 700; color: var(--accent); font-size: 16px; }
+label {
+  display: block; font-size: 11px; font-weight: 500;
+  color: var(--txt3); margin-bottom: 4px; line-height: 1.2;
+}
+.field-hint { font-size: 10px; color: var(--txt3); margin-top: 3px; font-style: italic; }
 
-  .collapsible-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
-  .collapsible-header .arrow { transition: transform .2s; color: var(--muted); font-size: 11px; }
-  .collapsible-header.open .arrow { transform: rotate(180deg); }
-  .collapsible-body { margin-top: 0; max-height: 0; overflow: hidden; transition: max-height .3s ease, margin-top .3s; }
-  .collapsible-body.open { max-height: 2000px; margin-top: 12px; }
+input[type=number], input[type=text], select {
+  width: 100%; background: var(--s3);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-sm);
+  color: var(--txt); padding: 8px 10px; font-size: 13px;
+  font-family: inherit; outline: none;
+  transition: border-color .15s, background .15s;
+  appearance: none; -webkit-appearance: none;
+}
+input[type=number]:focus, input[type=text]:focus, select:focus {
+  border-color: var(--blue); background: var(--s4);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23515a78'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 28px;
+}
+input[type=checkbox] { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
 
-  /* Results */
-  .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-  .card { background: var(--surface2); border-radius: var(--radius); padding: 13px 15px; border: 1px solid var(--border); }
-  .card .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
-  .card .value { font-size: 20px; font-weight: 700; }
-  .card .value.a { color: var(--accent); }
-  .card .value.b { color: var(--accent2); }
-  .card .sub-value { font-size: 11px; color: var(--muted); margin-top: 2px; }
+/* Finance mode tabs */
+.seg-ctrl {
+  display: flex; border: 1px solid var(--bdr); border-radius: var(--r-sm); overflow: hidden;
+  margin-bottom: 14px;
+}
+.seg-btn {
+  flex: 1; padding: 7px 6px; border: none; background: transparent;
+  color: var(--txt2); font-size: 12px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: all .15s; border-right: 1px solid var(--bdr);
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn:hover { background: var(--s3); }
+.seg-btn.active { background: var(--blue); color: #fff; }
 
-  .winner-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; background: rgba(76,175,130,.15); color: var(--green); border: 1px solid rgba(76,175,130,.3); margin-left: 6px; vertical-align: middle; }
+/* Dep preset chips */
+.chip-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip {
+  padding: 3px 9px; border-radius: 20px; border: 1px solid var(--bdr);
+  background: transparent; color: var(--txt2); font-size: 11px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+}
+.chip:hover { border-color: var(--blue); color: var(--blue); }
+.chip.active { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
 
-  .year-slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; background: var(--surface2); padding: 12px 15px; border-radius: var(--radius); border: 1px solid var(--border); }
-  .year-slider-row label { white-space: nowrap; color: var(--muted); font-size: 12px; margin: 0; }
-  .year-slider-row .range-val { font-size: 18px; min-width: 36px; }
+/* Dep rate table */
+.dep-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  margin-bottom: 4px;
+}
+.dep-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.dep-cell label { font-size: 10px; color: var(--txt3); margin: 0; text-align: center; }
+.dep-cell input[type=number] { padding: 5px 4px; font-size: 12px; text-align: center; }
 
-  .chart-wrap { background: var(--surface2); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); margin-bottom: 18px; }
-  .chart-tabs { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
-  .chart-tab { padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; }
-  .chart-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,.1); }
+/* EV credit box */
+.ev-box {
+  background: rgba(45,212,191,.06); border: 1px solid rgba(45,212,191,.15);
+  border-radius: var(--r-sm); padding: 12px; margin-top: 8px;
+}
+.ev-box-label {
+  font-size: 11px; font-weight: 600; color: var(--green); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 5px;
+}
 
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { color: var(--muted); font-weight: 600; text-align: right; padding: 5px 7px; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-  th:first-child { text-align: left; }
-  td { padding: 5px 7px; border-bottom: 1px solid rgba(46,49,71,.4); text-align: right; white-space: nowrap; }
-  td:first-child { text-align: left; font-weight: 500; white-space: normal; }
-  tr:hover td { background: rgba(79,142,247,.04); }
-  .row-total td { font-weight: 700; border-top: 1px solid var(--border); border-bottom: 2px solid var(--border); }
-  .row-total td.a { color: var(--accent); }
-  .row-total td.b { color: var(--accent2); }
+/* Multiplier row */
+.mult-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mult-row label { margin: 0; flex: 1; }
+.mult-row input { width: 70px; }
 
-  .table-scroll { overflow-x: auto; margin-bottom: 18px; }
-  .section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+/* Checkbox row */
+.cb-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--s3); border-radius: var(--r-sm);
+  border: 1px solid var(--bdr); cursor: pointer;
+}
+.cb-row label { margin: 0; color: var(--txt2); font-size: 12px; cursor: pointer; }
+.cb-row input { flex-shrink: 0; }
 
-  .dep-table td { font-size: 12px; }
-  .dep-table input[type=number] { padding: 3px 5px; font-size: 11px; text-align: center; }
+/* ── Right pane ──────────────────────────────────────────────────────── */
+.right-pane-inner { padding: 24px; max-width: 960px; }
 
-  .btn { padding: 7px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #3a7ce8; }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+/* Big comparison summary */
+.summary-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px;
+}
+.sum-card {
+  background: var(--s2); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 20px;
+  position: relative; overflow: hidden;
+}
+.sum-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.sum-card.card-a::before { background: linear-gradient(90deg, var(--blue), transparent); }
+.sum-card.card-b::before { background: linear-gradient(90deg, var(--amber), transparent); }
+.sum-card.card-diff::before { background: linear-gradient(90deg, var(--green), transparent); }
+.sum-card .sc-label {
+  font-size: 10px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px;
+}
+.sum-card .sc-name {
+  font-size: 12px; color: var(--txt2); font-weight: 500; margin-bottom: 10px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 6px;
+}
+.sum-card .sc-total {
+  font-size: 28px; font-weight: 800; letter-spacing: -.5px;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  margin-bottom: 6px;
+}
+.sum-card.card-a .sc-total { color: var(--blue); }
+.sum-card.card-b .sc-total { color: var(--amber); }
+.sum-card.card-diff .sc-total { color: var(--green); }
+.sum-card .sc-sub {
+  font-size: 11px; color: var(--txt3);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; line-height: 1.4;
+}
+.badge-winner { background: rgba(45,212,191,.12); color: var(--green); border: 1px solid rgba(45,212,191,.2); }
+.badge-loan { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(77,139,245,.2); }
+.badge-lease { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+.badge-cash { background: var(--green-dim); color: var(--green); border: 1px solid rgba(45,212,191,.2); }
 
-  .methodology-note { font-size: 11px; color: #555b7a; line-height: 1.6; padding: 10px 12px; background: rgba(79,142,247,.04); border-radius: 6px; border: 1px solid rgba(79,142,247,.08); margin-top: 8px; }
+/* Cost breakdown visual bar */
+.breakdown-wrap {
+  background: var(--s2); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 20px; margin-bottom: 20px;
+}
+.breakdown-wrap h3 {
+  font-size: 11px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .09em; margin-bottom: 16px;
+}
+.breakdown-vehicle { margin-bottom: 16px; }
+.breakdown-vehicle:last-child { margin-bottom: 0; }
+.bv-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.bv-name { font-size: 12px; font-weight: 600; }
+.bv-name.a { color: var(--blue); }
+.bv-name.b { color: var(--amber); }
+.bv-total { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bv-total.a { color: var(--blue); }
+.bv-total.b { color: var(--amber); }
+.stacked-bar {
+  display: flex; height: 22px; border-radius: 5px; overflow: hidden;
+  background: var(--s3); gap: 1px;
+}
+.bar-seg {
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+  position: relative; min-width: 2px;
+}
+.bar-seg:first-child { border-radius: 4px 0 0 4px; }
+.bar-seg:last-child { border-radius: 0 4px 4px 0; }
+.bd-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px;
+}
+.bd-legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--txt2);
+}
+.bd-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
-  .color-a { color: var(--accent); }
-  .color-b { color: var(--accent2); }
-  .color-green { color: var(--green); }
-  .color-red { color: var(--red); }
-  .tag-lease { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(155,108,247,.2); color: #9b6cf7; border: 1px solid rgba(155,108,247,.3); margin-left: 5px; vertical-align: middle; }
-  .tag-cash { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(76,175,130,.15); color: var(--green); border: 1px solid rgba(76,175,130,.25); margin-left: 5px; vertical-align: middle; }
-  .tag-loan { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(79,142,247,.15); color: var(--accent); border: 1px solid rgba(79,142,247,.25); margin-left: 5px; vertical-align: middle; }
+/* Chart panel */
+.chart-panel {
+  background: var(--s2); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 20px; margin-bottom: 20px;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.panel-header h3 {
+  font-size: 11px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .09em;
+}
+.chart-type-btns {
+  display: flex; gap: 4px;
+}
+.ctbtn {
+  padding: 4px 11px; border-radius: 20px; border: 1px solid var(--bdr);
+  background: transparent; color: var(--txt3); font-size: 11px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+}
+.ctbtn:hover { border-color: var(--blue); color: var(--blue); }
+.ctbtn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 
-  .ev-credit-row { background: rgba(76,175,130,.06); border-radius: 6px; padding: 8px 10px; border: 1px solid rgba(76,175,130,.15); margin-top: 6px; }
-  .ev-credit-row label { color: var(--green); }
+/* Detail table panel */
+.table-panel {
+  background: var(--s2); border: 1px solid var(--bdr);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 20px;
+}
+.table-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-panel-header h3 {
+  font-size: 11px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .09em;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  padding: 8px 12px; text-align: right;
+  font-size: 10px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1px solid var(--bdr); white-space: nowrap;
+  background: var(--s1);
+}
+th:first-child { text-align: left; }
+td {
+  padding: 7px 12px; text-align: right;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  color: var(--txt2); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+td:first-child { text-align: left; color: var(--txt); font-weight: 500; }
+tr:hover td { background: rgba(255,255,255,.02); }
+tr.section-header td {
+  background: var(--s1); padding: 6px 12px 5px;
+  font-size: 11px; font-weight: 700; color: var(--txt2);
+  border-bottom: 1px solid var(--bdr); border-top: 1px solid var(--bdr);
+}
+tr.row-total td {
+  font-weight: 700; color: var(--txt);
+  border-top: 1px solid var(--bdr); border-bottom: 2px solid var(--bdr);
+  background: var(--s3); font-size: 13px;
+}
+tr.row-total td.c-a { color: var(--blue); }
+tr.row-total td.c-b { color: var(--amber); }
+tr.row-equity td { color: var(--green); font-style: italic; }
+tr.row-net td { font-weight: 600; color: var(--green); }
+tr.row-diff-pos td.val { color: var(--red); }
+tr.row-diff-neg td.val { color: var(--green); }
 
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
-    .summary-cards { grid-template-columns: 1fr 1fr; }
-  }
+/* Methodology note */
+.method-note {
+  background: var(--s1); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 16px 20px; margin-bottom: 20px;
+}
+.method-note h4 {
+  font-size: 11px; font-weight: 600; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .09em; margin-bottom: 10px;
+}
+.method-note p {
+  font-size: 11px; color: var(--txt3); line-height: 1.7;
+  margin-bottom: 6px;
+}
+.method-note p:last-child { margin-bottom: 0; }
+.method-note strong { color: var(--txt2); font-weight: 500; }
+
+/* ── Scrollbar styling ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--s4); border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <h1>True Cost to Own</h1>
-    <div class="sub">All categories transparent &amp; adjustable · Purchase, Cash, or Lease · 1–10 year horizon · Side-by-side comparison</div>
+<!-- Sticky top comparison bar -->
+<div id="compBar">
+  <div class="logo">TCO <span>Calc</span></div>
+  <div class="comp-vehicle">
+    <div class="dot dot-a"></div>
+    <div class="name" id="barNameA">Vehicle A</div>
+    <div class="total a" id="barTotalA">—</div>
   </div>
-  <button class="btn btn-primary" onclick="recalculate()">↺ Recalculate</button>
-</header>
-
-<div class="layout">
-  <!-- LEFT: Inputs -->
-  <div class="pane">
-
-    <!-- Shared Settings -->
-    <div class="section" style="margin-bottom:16px">
-      <h2 style="color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px">Global Settings</h2>
-      <div class="field-grid">
-        <div>
-          <label>Annual Miles Driven</label>
-          <input type="number" id="annualMiles" value="15000" step="1000" onchange="recalculate()">
-        </div>
-        <div>
-          <label>Fuel Price ($/gal or $/kWh)</label>
-          <input type="number" id="fuelPrice" value="3.50" step="0.10" onchange="recalculate()">
-        </div>
-        <div>
-          <label>Sales Tax Rate (%)</label>
-          <input type="number" id="salesTaxRate" value="8.0" step="0.1" onchange="recalculate()">
-        </div>
-        <div>
-          <label>Annual Reg. &amp; Fees ($)</label>
-          <input type="number" id="annualFees" value="200" step="10" onchange="recalculate()">
-        </div>
-        <div>
-          <label>Opportunity Cost Rate (%) <span style="font-weight:400;font-style:italic;color:#555b7a">— foregone return on down payment cash</span></label>
-          <input type="number" id="opportunityRate" value="6.0" step="0.5" onchange="recalculate()">
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding-top:18px">
-          <input type="checkbox" id="showOpportunity" checked onchange="recalculate()" style="width:auto">
-          <label style="margin:0;cursor:pointer" for="showOpportunity">Include opp. cost</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Car Tabs -->
-    <div class="car-tabs">
-      <button class="car-tab active-a" id="tabA" onclick="showCar('A')">Vehicle A</button>
-      <button class="car-tab" id="tabB" onclick="showCar('B')">Vehicle B (compare)</button>
-    </div>
-
-    <!-- Vehicle A -->
-    <div id="carA">
-      <div class="section accent-border-a">
-        <h2 style="color:var(--accent)">Vehicle A</h2>
-        <div class="field-grid">
-          <div class="field-full">
-            <label>Name / Description</label>
-            <input type="text" id="nameA" value="2026 Toyota Camry XSE" onchange="recalculate()">
-          </div>
-          <div>
-            <label>MSRP ($) <span style="font-weight:400;font-style:italic;color:#555b7a">sticker price</span></label>
-            <input type="number" id="msrpA" value="34000" step="500" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Your Purchase / Cap Price ($)</label>
-            <input type="number" id="priceA" value="31500" step="500" onchange="recalculate()">
-            <div class="hint">Negotiated price — what you actually pay</div>
-          </div>
-          <div>
-            <label>Starting Odometer (mi)</label>
-            <input type="number" id="startMilesA" value="0" step="500" onchange="recalculate()">
-            <div class="hint">0 = new; 3,000–5,000 = loaner/demo</div>
-          </div>
-          <div>
-            <label>Fuel Type</label>
-            <select id="fuelTypeA" onchange="toggleEVA(); recalculate()">
-              <option value="gas">Gasoline</option>
-              <option value="diesel">Diesel</option>
-              <option value="hybrid">Hybrid</option>
-              <option value="ev">Electric ($/kWh)</option>
-            </select>
-          </div>
-          <div>
-            <label>MPG (or mi/kWh for EV)</label>
-            <input type="number" id="mpgA" value="38" step="1" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Annual Insurance ($)</label>
-            <input type="number" id="insuranceA" value="1800" step="50" onchange="recalculate()">
-          </div>
-          <div id="evCreditRowA" class="ev-credit-row field-full" style="display:none">
-            <label style="color:var(--green);margin-bottom:6px">⚡ EV / PHEV Tax Credit</label>
-            <div class="field-grid">
-              <div>
-                <label>Federal Tax Credit ($)</label>
-                <input type="number" id="fedCreditA" value="7500" step="500" onchange="recalculate()">
-              </div>
-              <div>
-                <label>State Incentive ($)</label>
-                <input type="number" id="stateCreditA" value="0" step="500" onchange="recalculate()">
-              </div>
-            </div>
-            <div class="hint" style="margin-top:4px">New EV: up to $7,500 federal; Used EV: up to $4,000 (30% of price). Applied in year 1.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Financing A -->
-      <div class="section accent-border-a">
-        <h2 style="color:var(--accent)">Financing — Vehicle A</h2>
-        <div class="finance-tabs">
-          <button class="finance-tab active" id="ftab_loan_A" onclick="setFinanceTab('A','loan')">Loan</button>
-          <button class="finance-tab" id="ftab_cash_A" onclick="setFinanceTab('A','cash')">Cash</button>
-          <button class="finance-tab" id="ftab_lease_A" onclick="setFinanceTab('A','lease')">Lease</button>
-        </div>
-        <div id="finLoan_A">
-          <div class="field-grid">
-            <div>
-              <label>Down Payment ($)</label>
-              <input type="number" id="downA" value="3000" step="500" onchange="recalculate()">
-            </div>
-            <div>
-              <label>APR (%)</label>
-              <input type="number" id="rateA" value="4.9" step="0.1" onchange="recalculate()">
-            </div>
-            <div class="field-full">
-              <label>Loan Term</label>
-              <select id="termA" onchange="recalculate()">
-                <option value="36">36 mo (3 yr)</option>
-                <option value="48">48 mo (4 yr)</option>
-                <option value="60" selected>60 mo (5 yr)</option>
-                <option value="72">72 mo (6 yr)</option>
-                <option value="84">84 mo (7 yr)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div id="finCash_A" style="display:none">
-          <p style="color:var(--muted);font-size:12px">Full purchase price paid upfront. Opportunity cost calculated on total cash outlay.</p>
-        </div>
-        <div id="finLease_A" style="display:none">
-          <div class="field-grid">
-            <div>
-              <label>Lease Term (months)</label>
-              <select id="leaseTermA" onchange="recalculate()">
-                <option value="24">24 months</option>
-                <option value="36" selected>36 months</option>
-                <option value="48">48 months</option>
-              </select>
-            </div>
-            <div>
-              <label>Residual Value (%)</label>
-              <input type="number" id="leaseResidualA" value="55" step="1" min="20" max="85" onchange="recalculate()">
-              <div class="hint">% of MSRP at lease end. Check dealer sheet.</div>
-            </div>
-            <div>
-              <label>Money Factor</label>
-              <input type="number" id="leaseMoneyFactorA" value="0.00175" step="0.00025" min="0" max="0.01" onchange="recalculate()">
-              <div class="hint">≈ APR ÷ 2400. e.g. 0.00175 ≈ 4.2% APR</div>
-            </div>
-            <div>
-              <label>Cap Cost Reduction ($)</label>
-              <input type="number" id="leaseCCRA" value="0" step="500" onchange="recalculate()">
-              <div class="hint">Down payment / drive-off</div>
-            </div>
-            <div>
-              <label>Acquisition Fee ($)</label>
-              <input type="number" id="leaseAcqA" value="750" step="50" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Disposition Fee ($)</label>
-              <input type="number" id="leaseDispA" value="395" step="25" onchange="recalculate()">
-              <div class="hint">Due at lease end if not buying</div>
-            </div>
-            <div>
-              <label>Excess Mileage Fee (¢/mi)</label>
-              <input type="number" id="leaseMileageFeeA" value="25" step="1" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Annual Mileage Allowance</label>
-              <input type="number" id="leaseMileageAllowA" value="12000" step="1000" onchange="recalculate()">
-            </div>
-          </div>
-          <div class="methodology-note">Lease cost = all monthly payments + cap cost reduction + acquisition fee + disposition fee + excess mileage. No residual equity at end. Compared fairly against purchase by noting purchase equity.</div>
-        </div>
-      </div>
-
-      <!-- Advanced A -->
-      <div class="section accent-border-a">
-        <div class="collapsible-header" onclick="toggleCollapse('advA','arrow_advA')">
-          <h2 style="color:var(--accent);margin:0;font-size:13px">Advanced: Depreciation &amp; Costs</h2>
-          <span class="arrow" id="arrow_advA">▼</span>
-        </div>
-        <div class="collapsible-body" id="advA">
-          <h3>Depreciation Rate by Year</h3>
-          <p style="font-size:11px;color:var(--muted);margin-bottom:8px">% of current market value lost per year. Presets from industry data (ALG/JD Power).</p>
-          <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','average')">Average</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','fast')">Fast</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','slow')">Slow / Toyota</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','luxury')">Luxury</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','truck')">Truck / SUV</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('A','ev')">EV</button>
-          </div>
-          <table class="dep-table" id="depTableA"></table>
-
-          <div style="margin-top:14px">
-            <h3>Maintenance &amp; Repair Scale</h3>
-            <div class="field-grid">
-              <div>
-                <label>Maintenance multiplier <span style="font-style:italic;font-weight:400">(1.0 = avg)</span></label>
-                <input type="number" id="maintMultA" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
-              </div>
-              <div>
-                <label>Repair multiplier <span style="font-style:italic;font-weight:400">(1.0 = avg)</span></label>
-                <input type="number" id="repairMultA" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:12px">
-            <h3>Insurance Annual Decline</h3>
-            <div class="field-grid">
-              <div>
-                <label>% decrease per year</label>
-                <input type="number" id="insuranceDecayA" value="3" step="0.5" min="0" max="10" onchange="recalculate()">
-              </div>
-            </div>
-          </div>
-          <div class="methodology-note" style="margin-top:10px">
-            Maintenance base: $400→$2,400/yr scaling with age (Consumer Reports / RepairPal data). Repairs: $0 yrs 1–3 (under warranty), rising to ~$1,800/yr at yr 10.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vehicle B -->
-    <div id="carB" style="display:none">
-      <div class="section accent-border-b">
-        <h2 style="color:var(--accent2)">Vehicle B</h2>
-        <div class="field-grid">
-          <div class="field-full">
-            <label>Name / Description</label>
-            <input type="text" id="nameB" value="2026 Honda Accord Sport" onchange="recalculate()">
-          </div>
-          <div>
-            <label>MSRP ($)</label>
-            <input type="number" id="msrpB" value="32000" step="500" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Your Purchase / Cap Price ($)</label>
-            <input type="number" id="priceB" value="30000" step="500" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Starting Odometer (mi)</label>
-            <input type="number" id="startMilesB" value="0" step="500" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Fuel Type</label>
-            <select id="fuelTypeB" onchange="toggleEVB(); recalculate()">
-              <option value="gas">Gasoline</option>
-              <option value="diesel">Diesel</option>
-              <option value="hybrid">Hybrid</option>
-              <option value="ev">Electric ($/kWh)</option>
-            </select>
-          </div>
-          <div>
-            <label>MPG (or mi/kWh for EV)</label>
-            <input type="number" id="mpgB" value="32" step="1" onchange="recalculate()">
-          </div>
-          <div>
-            <label>Annual Insurance ($)</label>
-            <input type="number" id="insuranceB" value="1700" step="50" onchange="recalculate()">
-          </div>
-          <div id="evCreditRowB" class="ev-credit-row field-full" style="display:none">
-            <label style="color:var(--green);margin-bottom:6px">⚡ EV / PHEV Tax Credit</label>
-            <div class="field-grid">
-              <div>
-                <label>Federal Tax Credit ($)</label>
-                <input type="number" id="fedCreditB" value="7500" step="500" onchange="recalculate()">
-              </div>
-              <div>
-                <label>State Incentive ($)</label>
-                <input type="number" id="stateCreditB" value="0" step="500" onchange="recalculate()">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section accent-border-b">
-        <h2 style="color:var(--accent2)">Financing — Vehicle B</h2>
-        <div class="finance-tabs">
-          <button class="finance-tab active" id="ftab_loan_B" onclick="setFinanceTab('B','loan')">Loan</button>
-          <button class="finance-tab" id="ftab_cash_B" onclick="setFinanceTab('B','cash')">Cash</button>
-          <button class="finance-tab" id="ftab_lease_B" onclick="setFinanceTab('B','lease')">Lease</button>
-        </div>
-        <div id="finLoan_B">
-          <div class="field-grid">
-            <div>
-              <label>Down Payment ($)</label>
-              <input type="number" id="downB" value="3000" step="500" onchange="recalculate()">
-            </div>
-            <div>
-              <label>APR (%)</label>
-              <input type="number" id="rateB" value="5.9" step="0.1" onchange="recalculate()">
-            </div>
-            <div class="field-full">
-              <label>Loan Term</label>
-              <select id="termB" onchange="recalculate()">
-                <option value="36">36 mo (3 yr)</option>
-                <option value="48">48 mo (4 yr)</option>
-                <option value="60" selected>60 mo (5 yr)</option>
-                <option value="72">72 mo (6 yr)</option>
-                <option value="84">84 mo (7 yr)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div id="finCash_B" style="display:none">
-          <p style="color:var(--muted);font-size:12px">Full purchase price paid upfront.</p>
-        </div>
-        <div id="finLease_B" style="display:none">
-          <div class="field-grid">
-            <div>
-              <label>Lease Term (months)</label>
-              <select id="leaseTermB" onchange="recalculate()">
-                <option value="24">24 months</option>
-                <option value="36" selected>36 months</option>
-                <option value="48">48 months</option>
-              </select>
-            </div>
-            <div>
-              <label>Residual Value (%)</label>
-              <input type="number" id="leaseResidualB" value="52" step="1" min="20" max="85" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Money Factor</label>
-              <input type="number" id="leaseMoneyFactorB" value="0.00210" step="0.00025" min="0" max="0.01" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Cap Cost Reduction ($)</label>
-              <input type="number" id="leaseCCRB" value="0" step="500" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Acquisition Fee ($)</label>
-              <input type="number" id="leaseAcqB" value="750" step="50" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Disposition Fee ($)</label>
-              <input type="number" id="leaseDispB" value="395" step="25" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Excess Mileage Fee (¢/mi)</label>
-              <input type="number" id="leaseMileageFeeB" value="25" step="1" onchange="recalculate()">
-            </div>
-            <div>
-              <label>Annual Mileage Allowance</label>
-              <input type="number" id="leaseMileageAllowB" value="12000" step="1000" onchange="recalculate()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section accent-border-b">
-        <div class="collapsible-header" onclick="toggleCollapse('advB','arrow_advB')">
-          <h2 style="color:var(--accent2);margin:0;font-size:13px">Advanced: Depreciation &amp; Costs</h2>
-          <span class="arrow" id="arrow_advB">▼</span>
-        </div>
-        <div class="collapsible-body" id="advB">
-          <h3>Depreciation Rate by Year</h3>
-          <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','average')">Average</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','fast')">Fast</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','slow')">Slow / Toyota</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','luxury')">Luxury</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','truck')">Truck / SUV</button>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="setDepPreset('B','ev')">EV</button>
-          </div>
-          <table class="dep-table" id="depTableB"></table>
-          <div style="margin-top:14px">
-            <h3>Maintenance &amp; Repair Scale</h3>
-            <div class="field-grid">
-              <div>
-                <label>Maintenance multiplier</label>
-                <input type="number" id="maintMultB" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
-              </div>
-              <div>
-                <label>Repair multiplier</label>
-                <input type="number" id="repairMultB" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:12px">
-            <h3>Insurance Annual Decline</h3>
-            <div class="field-grid">
-              <div>
-                <label>% decrease per year</label>
-                <input type="number" id="insuranceDecayB" value="3" step="0.5" min="0" max="10" onchange="recalculate()">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="comp-vs">vs</div>
+  <div class="comp-vehicle">
+    <div class="dot dot-b"></div>
+    <div class="name" id="barNameB">Vehicle B</div>
+    <div class="total b" id="barTotalB">—</div>
   </div>
-
-  <!-- RIGHT: Results -->
-  <div class="pane results">
-    <div class="year-slider-row">
-      <label>Ownership horizon:</label>
-      <input type="range" id="yearsSlider" min="1" max="10" value="5" oninput="document.getElementById('yearsVal').textContent=this.value; recalculate()">
-      <span class="range-val" id="yearsVal">5</span>
-      <label>years</label>
-    </div>
-
-    <div id="summaryCards" class="summary-cards"></div>
-
-    <div class="chart-wrap">
-      <div class="chart-tabs">
-        <button class="chart-tab active" onclick="switchChart('cumulative',this)">Cumulative Cost</button>
-        <button class="chart-tab" onclick="switchChart('annual',this)">Annual Cost</button>
-        <button class="chart-tab" onclick="switchChart('value',this)">Vehicle Value</button>
-        <button class="chart-tab" onclick="switchChart('breakdown',this)">Cost Breakdown</button>
-      </div>
-      <canvas id="mainChart" height="190"></canvas>
-    </div>
-
-    <div id="detailTables"></div>
-
-    <div class="methodology-note">
-      <strong>How costs are calculated:</strong>
-      <br>• <strong>Depreciation:</strong> Market value follows MSRP × annual residual curve. Your basis = purchase price. Buying below MSRP = lower year-1 depreciation. Loaner/demo cars: enter starting odometer to reflect partial-year depreciation already incurred.
-      <br>• <strong>Financing:</strong> Standard amortization; only interest is counted as cost (principal is equity). Lease: monthly payment × term + cap cost reduction + acquisition + disposition + excess mileage charges.
-      <br>• <strong>Opportunity cost:</strong> Compound annual return on down payment / CCR cash foregone over ownership period.
-      <br>• <strong>Taxes &amp; fees:</strong> Sales tax on purchase price (year 1 only) + annual registration. EV/PHEV credits deducted in year 1.
-      <br>• <strong>Insurance:</strong> Your base premium declining each year as vehicle value drops.
-      <br>• <strong>Maintenance:</strong> Age-based averages from Consumer Reports / RepairPal, scaled by your multiplier.
-      <br>• <strong>Repairs:</strong> $0 under warranty (yrs 1–3), rising sharply after year 5. Based on J.D. Power IQS data.
-      <br>• <strong>Categories match:</strong> Edmunds TCO (depreciation, financing, insurance, taxes/fees, fuel, maintenance, repairs, EV credits) + KBB 5-Year Cost to Own + opportunity cost (yours to toggle).
-    </div>
+  <div class="comp-savings">
+    <span class="label">Savings</span>
+    <span class="amount" id="barSavings">—</span>
   </div>
+  <div class="year-pills" id="yearPills"></div>
 </div>
 
+<!-- Body -->
+<div class="body">
+
+  <!-- ── LEFT PANE ─────────────────────────────────────────────────── -->
+  <div class="left-pane">
+    <div class="left-pane-inner">
+
+      <!-- Vehicle toggle -->
+      <div class="vehicle-toggle">
+        <button class="vtab active-a" id="tabA" onclick="showCar('A')">
+          <div class="vdot" style="background:var(--blue)"></div> Vehicle A
+        </button>
+        <button class="vtab" id="tabB" onclick="showCar('B')">
+          <div class="vdot" style="background:var(--amber)"></div> Vehicle B
+        </button>
+      </div>
+
+      <!-- VEHICLE A INPUT -->
+      <div id="carA">
+
+        <!-- Basic Info -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon icon-a">🚗</div>
+            <h2>Vehicle Details</h2>
+          </div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="fg-full">
+                <label>Name / Description</label>
+                <input type="text" id="nameA" value="2026 Toyota Camry XSE" onchange="recalculate()">
+              </div>
+              <div>
+                <label>MSRP (sticker price)</label>
+                <input type="number" id="msrpA" value="34000" step="500" onchange="recalculate()">
+                <div class="field-hint">Used for market value curve</div>
+              </div>
+              <div>
+                <label>Your Purchase Price</label>
+                <input type="number" id="priceA" value="31500" step="500" onchange="recalculate()">
+                <div class="field-hint">What you actually pay</div>
+              </div>
+              <div>
+                <label>Starting Odometer (mi)</label>
+                <input type="number" id="startMilesA" value="0" step="500" onchange="recalculate()">
+                <div class="field-hint">0 = new · 3-5k = loaner</div>
+              </div>
+              <div>
+                <label>Fuel Type</label>
+                <select id="fuelTypeA" onchange="toggleEVA();recalculate()">
+                  <option value="gas">Gasoline</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="ev">Electric ($/kWh)</option>
+                </select>
+              </div>
+              <div>
+                <label>MPG (or mi/kWh for EV)</label>
+                <input type="number" id="mpgA" value="38" step="1" onchange="recalculate()">
+              </div>
+              <div>
+                <label>Annual Insurance ($)</label>
+                <input type="number" id="insuranceA" value="1800" step="50" onchange="recalculate()">
+              </div>
+            </div>
+            <div id="evCreditRowA" style="display:none">
+              <div class="ev-box">
+                <div class="ev-box-label">⚡ EV / PHEV Tax Credits</div>
+                <div class="fg">
+                  <div>
+                    <label>Federal Credit ($)</label>
+                    <input type="number" id="fedCreditA" value="7500" step="500" onchange="recalculate()">
+                    <div class="field-hint">New EV: up to $7,500</div>
+                  </div>
+                  <div>
+                    <label>State Incentive ($)</label>
+                    <input type="number" id="stateCreditA" value="0" step="500" onchange="recalculate()">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financing -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon icon-a">💳</div>
+            <h2>Financing</h2>
+          </div>
+          <div class="card-body">
+            <div class="seg-ctrl">
+              <button class="seg-btn active" id="ftab_loan_A" onclick="setFinanceTab('A','loan')">Loan</button>
+              <button class="seg-btn" id="ftab_cash_A" onclick="setFinanceTab('A','cash')">Cash</button>
+              <button class="seg-btn" id="ftab_lease_A" onclick="setFinanceTab('A','lease')">Lease</button>
+            </div>
+            <div id="finLoan_A">
+              <div class="fg">
+                <div>
+                  <label>Down Payment ($)</label>
+                  <input type="number" id="downA" value="3000" step="500" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>APR (%)</label>
+                  <input type="number" id="rateA" value="4.9" step="0.1" onchange="recalculate()">
+                </div>
+                <div class="fg-full">
+                  <label>Loan Term</label>
+                  <select id="termA" onchange="recalculate()">
+                    <option value="36">36 months (3 yr)</option>
+                    <option value="48">48 months (4 yr)</option>
+                    <option value="60" selected>60 months (5 yr)</option>
+                    <option value="72">72 months (6 yr)</option>
+                    <option value="84">84 months (7 yr)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="finCash_A" style="display:none">
+              <p style="font-size:12px;color:var(--txt2);padding:8px 0">Full purchase price paid upfront. Opportunity cost is calculated on the total cash outlay.</p>
+            </div>
+            <div id="finLease_A" style="display:none">
+              <div class="fg">
+                <div>
+                  <label>Lease Term</label>
+                  <select id="leaseTermA" onchange="recalculate()">
+                    <option value="24">24 months</option>
+                    <option value="36" selected>36 months</option>
+                    <option value="48">48 months</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Residual Value (%)</label>
+                  <input type="number" id="leaseResidualA" value="55" step="1" min="20" max="85" onchange="recalculate()">
+                  <div class="field-hint">% of MSRP at lease end</div>
+                </div>
+                <div>
+                  <label>Money Factor</label>
+                  <input type="number" id="leaseMoneyFactorA" value="0.00175" step="0.00025" min="0" max="0.01" onchange="recalculate()">
+                  <div class="field-hint">≈ APR ÷ 2400</div>
+                </div>
+                <div>
+                  <label>Cap Cost Reduction ($)</label>
+                  <input type="number" id="leaseCCRA" value="0" step="500" onchange="recalculate()">
+                  <div class="field-hint">Drive-off / down payment</div>
+                </div>
+                <div>
+                  <label>Acquisition Fee ($)</label>
+                  <input type="number" id="leaseAcqA" value="750" step="50" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Disposition Fee ($)</label>
+                  <input type="number" id="leaseDispA" value="395" step="25" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Allowed Miles / Year</label>
+                  <input type="number" id="leaseMileageAllowA" value="12000" step="1000" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Excess Mileage (¢/mi)</label>
+                  <input type="number" id="leaseMileageFeeA" value="25" step="1" onchange="recalculate()">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced -->
+        <div class="card">
+          <div class="card-header collapsible" id="advHdrA" onclick="toggleAdv('A')">
+            <div class="card-icon icon-neutral">⚙️</div>
+            <h2>Advanced Settings</h2>
+            <span class="chevron" id="advChevA">▼</span>
+          </div>
+          <div class="card-body collapsible-body" id="advA">
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Depreciation Rate by Year (%)</h3>
+            <div class="chip-row" id="presetChipsA">
+              <button class="chip active" onclick="setDepPreset('A','average')">Average</button>
+              <button class="chip" onclick="setDepPreset('A','slow')">Toyota / Slow</button>
+              <button class="chip" onclick="setDepPreset('A','fast')">Fast</button>
+              <button class="chip" onclick="setDepPreset('A','luxury')">Luxury</button>
+              <button class="chip" onclick="setDepPreset('A','truck')">Truck / SUV</button>
+              <button class="chip" onclick="setDepPreset('A','ev')">EV</button>
+            </div>
+            <div class="dep-grid" id="depGridA"></div>
+            <div class="dep-grid" id="depGridA2"></div>
+
+            <div class="divider"></div>
+
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px">Maintenance &amp; Repairs</h3>
+            <div class="mult-row">
+              <label>Maintenance scale <span style="font-style:italic;color:var(--txt3);font-weight:400">(1.0 = avg)</span></label>
+              <input type="number" id="maintMultA" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
+            </div>
+            <div class="mult-row">
+              <label>Repair scale <span style="font-style:italic;color:var(--txt3);font-weight:400">(1.0 = avg)</span></label>
+              <input type="number" id="repairMultA" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px">Insurance</h3>
+            <div class="mult-row">
+              <label>Annual premium decline (%/yr)</label>
+              <input type="number" id="insuranceDecayA" value="3" step="0.5" min="0" max="10" onchange="recalculate()">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /carA -->
+
+      <!-- VEHICLE B INPUT -->
+      <div id="carB" style="display:none">
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon icon-b">🚗</div>
+            <h2>Vehicle Details</h2>
+          </div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="fg-full">
+                <label>Name / Description</label>
+                <input type="text" id="nameB" value="2026 Honda Accord Sport" onchange="recalculate()">
+              </div>
+              <div>
+                <label>MSRP (sticker price)</label>
+                <input type="number" id="msrpB" value="32000" step="500" onchange="recalculate()">
+              </div>
+              <div>
+                <label>Your Purchase Price</label>
+                <input type="number" id="priceB" value="30000" step="500" onchange="recalculate()">
+              </div>
+              <div>
+                <label>Starting Odometer (mi)</label>
+                <input type="number" id="startMilesB" value="0" step="500" onchange="recalculate()">
+              </div>
+              <div>
+                <label>Fuel Type</label>
+                <select id="fuelTypeB" onchange="toggleEVB();recalculate()">
+                  <option value="gas">Gasoline</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="ev">Electric ($/kWh)</option>
+                </select>
+              </div>
+              <div>
+                <label>MPG (or mi/kWh for EV)</label>
+                <input type="number" id="mpgB" value="32" step="1" onchange="recalculate()">
+              </div>
+              <div>
+                <label>Annual Insurance ($)</label>
+                <input type="number" id="insuranceB" value="1700" step="50" onchange="recalculate()">
+              </div>
+            </div>
+            <div id="evCreditRowB" style="display:none">
+              <div class="ev-box">
+                <div class="ev-box-label">⚡ EV / PHEV Tax Credits</div>
+                <div class="fg">
+                  <div>
+                    <label>Federal Credit ($)</label>
+                    <input type="number" id="fedCreditB" value="7500" step="500" onchange="recalculate()">
+                  </div>
+                  <div>
+                    <label>State Incentive ($)</label>
+                    <input type="number" id="stateCreditB" value="0" step="500" onchange="recalculate()">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon icon-b">💳</div>
+            <h2>Financing</h2>
+          </div>
+          <div class="card-body">
+            <div class="seg-ctrl">
+              <button class="seg-btn active" id="ftab_loan_B" onclick="setFinanceTab('B','loan')">Loan</button>
+              <button class="seg-btn" id="ftab_cash_B" onclick="setFinanceTab('B','cash')">Cash</button>
+              <button class="seg-btn" id="ftab_lease_B" onclick="setFinanceTab('B','lease')">Lease</button>
+            </div>
+            <div id="finLoan_B">
+              <div class="fg">
+                <div>
+                  <label>Down Payment ($)</label>
+                  <input type="number" id="downB" value="3000" step="500" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>APR (%)</label>
+                  <input type="number" id="rateB" value="5.9" step="0.1" onchange="recalculate()">
+                </div>
+                <div class="fg-full">
+                  <label>Loan Term</label>
+                  <select id="termB" onchange="recalculate()">
+                    <option value="36">36 months (3 yr)</option>
+                    <option value="48">48 months (4 yr)</option>
+                    <option value="60" selected>60 months (5 yr)</option>
+                    <option value="72">72 months (6 yr)</option>
+                    <option value="84">84 months (7 yr)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="finCash_B" style="display:none">
+              <p style="font-size:12px;color:var(--txt2);padding:8px 0">Full purchase price paid upfront.</p>
+            </div>
+            <div id="finLease_B" style="display:none">
+              <div class="fg">
+                <div>
+                  <label>Lease Term</label>
+                  <select id="leaseTermB" onchange="recalculate()">
+                    <option value="24">24 months</option>
+                    <option value="36" selected>36 months</option>
+                    <option value="48">48 months</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Residual Value (%)</label>
+                  <input type="number" id="leaseResidualB" value="52" step="1" min="20" max="85" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Money Factor</label>
+                  <input type="number" id="leaseMoneyFactorB" value="0.00210" step="0.00025" min="0" max="0.01" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Cap Cost Reduction ($)</label>
+                  <input type="number" id="leaseCCRB" value="0" step="500" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Acquisition Fee ($)</label>
+                  <input type="number" id="leaseAcqB" value="750" step="50" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Disposition Fee ($)</label>
+                  <input type="number" id="leaseDispB" value="395" step="25" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Allowed Miles / Year</label>
+                  <input type="number" id="leaseMileageAllowB" value="12000" step="1000" onchange="recalculate()">
+                </div>
+                <div>
+                  <label>Excess Mileage (¢/mi)</label>
+                  <input type="number" id="leaseMileageFeeB" value="25" step="1" onchange="recalculate()">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header collapsible" id="advHdrB" onclick="toggleAdv('B')">
+            <div class="card-icon icon-neutral">⚙️</div>
+            <h2>Advanced Settings</h2>
+            <span class="chevron" id="advChevB">▼</span>
+          </div>
+          <div class="card-body collapsible-body" id="advB">
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px">Depreciation Rate by Year (%)</h3>
+            <div class="chip-row" id="presetChipsB">
+              <button class="chip active" onclick="setDepPreset('B','average')">Average</button>
+              <button class="chip" onclick="setDepPreset('B','slow')">Toyota / Slow</button>
+              <button class="chip" onclick="setDepPreset('B','fast')">Fast</button>
+              <button class="chip" onclick="setDepPreset('B','luxury')">Luxury</button>
+              <button class="chip" onclick="setDepPreset('B','truck')">Truck / SUV</button>
+              <button class="chip" onclick="setDepPreset('B','ev')">EV</button>
+            </div>
+            <div class="dep-grid" id="depGridB"></div>
+            <div class="dep-grid" id="depGridB2"></div>
+            <div class="divider"></div>
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px">Maintenance &amp; Repairs</h3>
+            <div class="mult-row">
+              <label>Maintenance scale</label>
+              <input type="number" id="maintMultB" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
+            </div>
+            <div class="mult-row">
+              <label>Repair scale</label>
+              <input type="number" id="repairMultB" value="1.0" step="0.1" min="0.1" max="5" onchange="recalculate()">
+            </div>
+            <div class="divider"></div>
+            <h3 style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px">Insurance</h3>
+            <div class="mult-row">
+              <label>Annual premium decline (%/yr)</label>
+              <input type="number" id="insuranceDecayB" value="3" step="0.5" min="0" max="10" onchange="recalculate()">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /carB -->
+
+      <!-- Global settings at bottom of left pane -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-neutral">🌍</div>
+          <h2>Global Settings</h2>
+        </div>
+        <div class="card-body">
+          <div class="fg">
+            <div>
+              <label>Annual Miles Driven</label>
+              <input type="number" id="annualMiles" value="15000" step="1000" onchange="recalculate()">
+            </div>
+            <div>
+              <label>Fuel Price ($/gal or /kWh)</label>
+              <input type="number" id="fuelPrice" value="3.50" step="0.10" onchange="recalculate()">
+            </div>
+            <div>
+              <label>Sales Tax Rate (%)</label>
+              <input type="number" id="salesTaxRate" value="8.0" step="0.1" onchange="recalculate()">
+            </div>
+            <div>
+              <label>Annual Reg. &amp; Fees ($)</label>
+              <input type="number" id="annualFees" value="200" step="10" onchange="recalculate()">
+            </div>
+            <div>
+              <label>Opportunity Cost Rate (%)</label>
+              <input type="number" id="opportunityRate" value="6.0" step="0.5" onchange="recalculate()">
+              <div class="field-hint">Foregone return on down payment</div>
+            </div>
+            <div style="display:flex;align-items:center;padding-top:18px">
+              <label class="cb-row" style="width:100%" for="showOpportunity">
+                <input type="checkbox" id="showOpportunity" checked onchange="recalculate()">
+                Include opp. cost
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /left-pane-inner -->
+  </div><!-- /left-pane -->
+
+  <!-- ── RIGHT PANE ────────────────────────────────────────────────── -->
+  <div class="right-pane">
+    <div class="right-pane-inner">
+
+      <!-- Summary row -->
+      <div class="summary-row" id="summaryRow"></div>
+
+      <!-- Visual cost breakdown -->
+      <div class="breakdown-wrap" id="breakdownWrap"></div>
+
+      <!-- Chart -->
+      <div class="chart-panel">
+        <div class="panel-header">
+          <h3>Cost Over Time</h3>
+          <div class="chart-type-btns">
+            <button class="ctbtn active" onclick="switchChart('cumulative',this)">Cumulative</button>
+            <button class="ctbtn" onclick="switchChart('annual',this)">Annual</button>
+            <button class="ctbtn" onclick="switchChart('value',this)">Vehicle Value</button>
+            <button class="ctbtn" onclick="switchChart('breakdown',this)">Breakdown</button>
+          </div>
+        </div>
+        <canvas id="mainChart" height="220"></canvas>
+      </div>
+
+      <!-- Detail table -->
+      <div class="table-panel" id="tablePanel"></div>
+
+      <!-- Methodology -->
+      <div class="method-note">
+        <h4>Methodology</h4>
+        <p><strong>Depreciation:</strong> Year-0 basis = your purchase price. Years 1+ = MSRP × cumulative residual factors (market-anchored). Buying below MSRP reduces year-1 depreciation; subsequent market values follow the MSRP curve regardless of what you paid.</p>
+        <p><strong>Financing:</strong> Full amortization — only interest counted as cost (principal is equity). Lease cost = all monthly payments + CCR + acquisition + disposition + excess mileage. No equity at lease end.</p>
+        <p><strong>Opportunity cost:</strong> Compound annual return on down payment cash foregone, accumulated over ownership period. Toggle on/off above.</p>
+        <p><strong>Maintenance &amp; repairs:</strong> Age-based averages (Consumer Reports / RepairPal). $400–$2,400/yr maintenance scaling with age. $0 repairs yrs 1–3 (warranty), rising to ~$1,800/yr at yr 10. Adjust with multipliers.</p>
+        <p><strong>Categories match:</strong> Edmunds True Cost to Own (depreciation, financing, insurance, taxes/fees, fuel, maintenance, repairs, EV credits) + KBB 5-Year Cost to Own + opportunity cost.</p>
+      </div>
+
+    </div>
+  </div><!-- /right-pane -->
+
+</div><!-- /body -->
+
 <script>
-// ─── State ────────────────────────────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────────────────────
 const DEP_PRESETS = {
-  average: [20, 15, 12, 10,  9,  8,  7,  7,  7,  7],
-  fast:    [30, 20, 15, 12, 10,  9,  8,  8,  7,  7],
-  slow:    [15, 12, 10,  8,  7,  6,  6,  6,  5,  5],
-  luxury:  [28, 20, 15, 12, 10,  9,  8,  7,  7,  6],
-  truck:   [15, 12, 10,  9,  8,  7,  7,  6,  6,  6],
-  ev:      [25, 18, 14, 11,  9,  8,  8,  7,  7,  6],
+  average: [20,15,12,10, 9, 8, 7, 7, 7, 7],
+  fast:    [30,20,15,12,10, 9, 8, 8, 7, 7],
+  slow:    [15,12,10, 8, 7, 6, 6, 6, 5, 5],
+  luxury:  [28,20,15,12,10, 9, 8, 7, 7, 6],
+  truck:   [15,12,10, 9, 8, 7, 7, 6, 6, 6],
+  ev:      [25,18,14,11, 9, 8, 8, 7, 7, 6],
 };
-let depRates = { A: [...DEP_PRESETS.average], B: [...DEP_PRESETS.average] };
-let financeMode = { A: 'loan', B: 'loan' };
+const BASE_MAINT  = [400,500,600,800,1000,1200,1400,1700,2000,2400];
+const BASE_REPAIR = [  0,  0,  0,300, 500, 700, 900,1200,1500,1800];
 
-// Maintenance & repair base costs (annual, per year 1–10)
-const BASE_MAINT  = [400, 500, 600, 800, 1000, 1200, 1400, 1700, 2000, 2400];
-const BASE_REPAIR = [  0,   0,   0, 300,  500,  700,  900, 1200, 1500, 1800];
+const CAT_COLORS = ['#f87171','#fb923c','#facc15','#4ade80','#34d399','#22d3ee','#818cf8','#c084fc'];
+const CAT_NAMES  = ['Depreciation','Interest / Lease','Insurance','Maintenance','Repairs','Fuel','Taxes & Fees','Opp. Cost'];
+const CAT_KEYS   = ['depCost','interest','insurance','maint','repair','fuel','taxes','opp'];
 
-// ─── Build depreciation input tables ─────────────────────────────────────────
-function buildDepTable(car) {
-  const el = document.getElementById('depTable' + car);
-  let html = '<thead><tr>';
-  for (let y = 1; y <= 10; y++) html += `<th style="text-align:center;padding:3px 4px">Yr ${y}</th>`;
-  html += '</tr></thead><tbody><tr>';
-  for (let y = 1; y <= 10; y++) {
-    html += `<td style="padding:2px 2px"><input type="number" id="dep${car}${y}" value="${depRates[car][y-1]}"
-      style="width:44px" min="0" max="99" step="1"
-      oninput="depRates['${car}'][${y-1}]=parseFloat(this.value)||0;recalculate()"></td>`;
+let depRates = { A:[...DEP_PRESETS.average], B:[...DEP_PRESETS.average] };
+let financeMode = { A:'loan', B:'loan' };
+let activeYear = 5;
+let mainChart = null;
+let currentChartType = 'cumulative';
+let lastRA, lastRB;
+
+// ── Build dep grids (5 cols each row) ────────────────────────────────────────
+function buildDepGrid(car) {
+  for (const suffix of ['','2']) {
+    const el = document.getElementById('depGrid'+car+suffix);
+    if (!el) continue;
+    const startY = suffix === '' ? 1 : 6;
+    let html = '';
+    for (let y = startY; y <= startY+4; y++) {
+      html += `<div class="dep-cell">
+        <label>Yr ${y}</label>
+        <input type="number" id="dep${car}${y}" value="${depRates[car][y-1]}"
+          min="0" max="99" step="1"
+          oninput="depRates['${car}'][${y-1}]=parseFloat(this.value)||0;recalculate()">
+      </div>`;
+    }
+    el.innerHTML = html;
   }
-  html += '</tr></tbody>';
-  el.innerHTML = html;
 }
+
 function setDepPreset(car, preset) {
   depRates[car] = [...DEP_PRESETS[preset]];
-  buildDepTable(car);
-  recalculate();
-}
-
-// ─── Finance tabs ─────────────────────────────────────────────────────────────
-function setFinanceTab(car, mode) {
-  financeMode[car] = mode;
-  ['loan','cash','lease'].forEach(m => {
-    document.getElementById(`ftab_${m}_${car}`).className = 'finance-tab' + (m === mode ? ' active' : '');
-    document.getElementById(`fin${m.charAt(0).toUpperCase()+m.slice(1)}_${car}`).style.display = m === mode ? 'block' : 'none';
+  buildDepGrid(car);
+  // update chip states
+  document.querySelectorAll(`#presetChips${car} .chip`).forEach(c => {
+    c.classList.toggle('active', c.textContent.toLowerCase().includes(preset) || (preset==='slow' && c.textContent.includes('Toyota')));
   });
   recalculate();
 }
 
-// ─── EV credit row toggle ─────────────────────────────────────────────────────
+// ── UI helpers ───────────────────────────────────────────────────────────────
+function showCar(which) {
+  document.getElementById('carA').style.display = which==='A' ? '' : 'none';
+  document.getElementById('carB').style.display = which==='B' ? '' : 'none';
+  document.getElementById('tabA').className = 'vtab' + (which==='A' ? ' active-a' : '');
+  document.getElementById('tabB').className = 'vtab' + (which==='B' ? ' active-b' : '');
+}
+
+function toggleAdv(car) {
+  const body = document.getElementById('adv'+car);
+  const hdr  = document.getElementById('advHdr'+car);
+  const chev = document.getElementById('advChev'+car);
+  const open = body.classList.toggle('open');
+  hdr.classList.toggle('open', open);
+}
+
+function setFinanceTab(car, mode) {
+  financeMode[car] = mode;
+  ['loan','cash','lease'].forEach(m => {
+    document.getElementById(`ftab_${m}_${car}`).className = 'seg-btn' + (m===mode ? ' active' : '');
+    const el = document.getElementById(`fin${m.charAt(0).toUpperCase()+m.slice(1)}_${car}`);
+    if (el) el.style.display = m===mode ? '' : 'none';
+  });
+  recalculate();
+}
+
 function toggleEVA() {
   document.getElementById('evCreditRowA').style.display =
-    document.getElementById('fuelTypeA').value === 'ev' ? '' : 'none';
+    document.getElementById('fuelTypeA').value==='ev' ? '' : 'none';
 }
 function toggleEVB() {
   document.getElementById('evCreditRowB').style.display =
-    document.getElementById('fuelTypeB').value === 'ev' ? '' : 'none';
+    document.getElementById('fuelTypeB').value==='ev' ? '' : 'none';
 }
 
-// ─── UI ───────────────────────────────────────────────────────────────────────
-function showCar(which) {
-  document.getElementById('carA').style.display = which === 'A' ? 'block' : 'none';
-  document.getElementById('carB').style.display = which === 'B' ? 'block' : 'none';
-  document.getElementById('tabA').className = 'car-tab' + (which === 'A' ? ' active-a' : '');
-  document.getElementById('tabB').className = 'car-tab' + (which === 'B' ? ' active-b' : '');
-}
-function toggleCollapse(bodyId, arrowId) {
-  const body = document.getElementById(bodyId);
-  const arrow = document.getElementById(arrowId);
-  const open = body.classList.toggle('open');
-  arrow.parentElement.classList.toggle('open', open);
+// ── Year pills ───────────────────────────────────────────────────────────────
+function buildYearPills() {
+  const container = document.getElementById('yearPills');
+  let html = '';
+  for (let y = 1; y <= 10; y++) {
+    html += `<button class="year-pill${y===activeYear?' active':''}" onclick="setYear(${y})">${y}</button>`;
+  }
+  container.innerHTML = html;
 }
 
-// ─── Format helpers ───────────────────────────────────────────────────────────
-const fmt = n => '$' + Math.round(n).toLocaleString();
-const fmtSmall = n => '$' + Math.round(n).toLocaleString();
+function setYear(y) {
+  activeYear = y;
+  buildYearPills();
+  recalculate();
+}
 
-// ─── Loan interest by year ────────────────────────────────────────────────────
+// ── Finance math ─────────────────────────────────────────────────────────────
 function loanInterestByYear(principal, aprPct, termMonths) {
-  const monthlyR = (aprPct / 100) / 12;
+  const r = (aprPct/100)/12;
   let pmt = 0;
-  if (principal > 0 && monthlyR > 0) {
-    pmt = principal * (monthlyR * Math.pow(1 + monthlyR, termMonths)) / (Math.pow(1 + monthlyR, termMonths) - 1);
-  } else if (principal > 0) {
-    pmt = principal / termMonths;
+  if (principal>0 && r>0) {
+    pmt = principal*(r*Math.pow(1+r,termMonths))/(Math.pow(1+r,termMonths)-1);
+  } else if (principal>0) {
+    pmt = principal/termMonths;
   }
-  const byYear = Array(11).fill(0);
+  const by = Array(11).fill(0);
   let bal = principal;
-  for (let m = 1; m <= termMonths; m++) {
-    const yr = Math.min(Math.ceil(m / 12), 10);
-    const intPmt = bal * monthlyR;
-    byYear[yr] += intPmt;
-    bal = Math.max(0, bal - (pmt - intPmt));
+  for (let m=1; m<=termMonths; m++) {
+    const yr = Math.min(Math.ceil(m/12),10);
+    const int = bal*r;
+    by[yr] += int;
+    bal = Math.max(0, bal-(pmt-int));
   }
-  return byYear;
+  return by;
 }
 
-// ─── Lease calculation ────────────────────────────────────────────────────────
-function leasePaymentMonthly(capCost, msrp, residualPct, moneyFactor, termMonths) {
-  const residualVal = msrp * (residualPct / 100);
-  const depFee = (capCost - residualVal) / termMonths;
-  const financeFee = (capCost + residualVal) * moneyFactor;
-  return depFee + financeFee;
+function leaseMonthlyPayment(capCost, msrp, residualPct, mf, termMonths) {
+  const rv = msrp*(residualPct/100);
+  return (capCost-rv)/termMonths + (capCost+rv)*mf;
 }
 
-// ─── Core per-vehicle calculation ─────────────────────────────────────────────
+// ── Core calc ────────────────────────────────────────────────────────────────
 function calcCar(car, years) {
-  const g = id => parseFloat(document.getElementById(id).value) || 0;
-  const gi = id => parseInt(document.getElementById(id).value) || 0;
+  const g  = id => parseFloat(document.getElementById(id).value)||0;
+  const gi = id => parseInt(document.getElementById(id).value)||0;
   const gs = id => document.getElementById(id).value;
 
-  const msrp      = g('msrp'+car);
-  const price     = g('price'+car);
-  const mpg       = g('mpg'+car) || 1;
-  const insBase   = g('insurance'+car);
-  const insDec    = g('insuranceDecay'+car) / 100;
-  const maintMul  = g('maintMult'+car) || 1;
-  const repairMul = g('repairMult'+car) || 1;
-  const annualMi  = g('annualMiles') || 15000;
-  const fuelPx    = g('fuelPrice') || 3.50;
-  const taxRate   = g('salesTaxRate') / 100;
-  const annFees   = g('annualFees');
-  const oppRate   = g('opportunityRate') / 100;
-  const inclOpp   = document.getElementById('showOpportunity').checked;
-  const fuelType  = gs('fuelType'+car);
-  const fedCredit = fuelType === 'ev' ? g('fedCredit'+car) : 0;
-  const stateCredit = fuelType === 'ev' ? g('stateCredit'+car) : 0;
-  const mode      = financeMode[car];
+  const msrp       = g('msrp'+car);
+  const price      = g('price'+car);
+  const mpg        = g('mpg'+car)||1;
+  const insBase    = g('insurance'+car);
+  const insDec     = g('insuranceDecay'+car)/100;
+  const maintMul   = g('maintMult'+car)||1;
+  const repairMul  = g('repairMult'+car)||1;
+  const annualMi   = g('annualMiles')||15000;
+  const fuelPx     = g('fuelPrice')||3.5;
+  const taxRate    = g('salesTaxRate')/100;
+  const annFees    = g('annualFees');
+  const oppRate    = g('opportunityRate')/100;
+  const inclOpp    = document.getElementById('showOpportunity').checked;
+  const fuelType   = gs('fuelType'+car);
+  const fedCredit  = fuelType==='ev' ? g('fedCredit'+car) : 0;
+  const stateCredit= fuelType==='ev' ? g('stateCredit'+car) : 0;
+  const mode       = financeMode[car];
 
-  // Market value curve:
-  // Year 0 = purchase price (your actual cost basis).
-  // Year 1+ = MSRP × cumulative residual factors — the used-car market prices the
-  // vehicle based on model/trim, not what any individual paid. Buying below MSRP
-  // is a one-time savings that lowers your basis; subsequent market values are
-  // MSRP-anchored regardless of your deal.
-  // Depreciation cost each year = value(start of year) − value(end of year).
-  const marketVal = [price]; // index 0 = your purchase price
+  // Market value curve
+  const marketVal = [price];
   let mv = msrp;
-  for (let y = 1; y <= 10; y++) {
-    mv *= (1 - depRates[car][y-1] / 100);
+  for (let y=1; y<=10; y++) {
+    mv *= (1-depRates[car][y-1]/100);
     marketVal.push(mv);
   }
 
-  // Financing costs
+  // Financing
   let interestByYear = Array(11).fill(0);
-  let cashOut = 0; // cash outlay for opportunity cost
-  let leaseMonthly = 0, leaseTermMo = 0, leaseTotalCost = 0, leaseExcessMi = 0;
+  let cashOut = 0;
+  let leaseMonthly = 0, leaseTermMo = 0, leaseExcessMi = 0;
 
-  if (mode === 'loan') {
-    const down   = g('down'+car);
-    const apr    = g('rate'+car);
-    const termMo = gi('term'+car);
+  if (mode==='loan') {
+    const down=g('down'+car), apr=g('rate'+car), termMo=gi('term'+car);
     cashOut = down;
-    interestByYear = loanInterestByYear(price - down, apr, termMo);
-  } else if (mode === 'cash') {
+    interestByYear = loanInterestByYear(price-down, apr, termMo);
+  } else if (mode==='cash') {
     cashOut = price;
-  } else if (mode === 'lease') {
-    const leaseTerm   = gi('leaseTerm'+car);
-    const residualPct = g('leaseResidual'+car);
-    const mf          = g('leaseMoneyFactor'+car);
-    const ccr         = g('leaseCCR'+car);
-    const acqFee      = g('leaseAcq'+car);
-    const dispFee     = g('leaseDis'+car.toLowerCase()+'p'+car) || g('leaseDis' + 'p' + car);
-    const milageFee   = g('leaseMileageFee'+car) / 100; // convert cents to dollars
-    const milesAllow  = g('leaseMileageAllow'+car);
-    leaseTermMo = leaseTerm;
-    leaseMonthly = leasePaymentMonthly(price - ccr + acqFee, msrp, residualPct, mf, leaseTerm);
-    const annualOverage = Math.max(0, annualMi - milesAllow);
-    leaseExcessMi = annualOverage * milageFee * (leaseTerm / 12);
+  } else {
+    leaseTermMo   = gi('leaseTerm'+car);
+    const resPct  = g('leaseResidual'+car);
+    const mf      = g('leaseMoneyFactor'+car);
+    const ccr     = g('leaseCCR'+car);
+    const acq     = g('leaseAcq'+car);
+    const disp    = g('leaseDis'+car.toLowerCase()+'p'+car) || g('leaseDisp'+car);
+    const miCost  = g('leaseMileageFee'+car)/100;
+    const miAllow = g('leaseMileageAllow'+car);
     cashOut = ccr;
+    leaseMonthly = leaseMonthlyPayment(price-ccr+acq, msrp, resPct, mf, leaseTermMo);
+    leaseExcessMi = Math.max(0, annualMi-miAllow) * miCost * (leaseTermMo/12);
   }
 
-  // Opportunity cost: compound on cash outlay
-  let oppCostByYear = [];
-  let oppBase = cashOut;
-  for (let y = 1; y <= 10; y++) {
-    oppCostByYear.push(inclOpp ? oppBase * oppRate : 0);
-    oppBase += inclOpp ? oppBase * oppRate : 0;
+  // Opportunity cost
+  let oppBase = cashOut, oppByYear = [];
+  for (let y=1; y<=10; y++) {
+    oppByYear.push(inclOpp ? oppBase*oppRate : 0);
+    if (inclOpp) oppBase += oppBase*oppRate;
   }
 
-  // For lease: precompute per-year costs from lease payments (only within lease term)
-  const leaseCostPerYear = year => {
-    if (mode !== 'lease') return 0;
-    const leaseYears = leaseTermMo / 12;
-    if (year <= Math.floor(leaseYears)) return leaseMonthly * 12;
-    if (year === Math.ceil(leaseYears) && leaseYears % 1 !== 0) return leaseMonthly * (leaseYears % 1) * 12;
+  const leaseCostPerYear = y => {
+    if (mode!=='lease') return 0;
+    const leaseYrs = leaseTermMo/12;
+    if (y <= Math.floor(leaseYrs)) return leaseMonthly*12;
+    if (y===Math.ceil(leaseYrs) && leaseYrs%1!==0) return leaseMonthly*(leaseYrs%1)*12;
     return 0;
   };
 
-  // Build year rows
   const rows = [];
-  for (let y = 1; y <= years; y++) {
-    const depCost   = mode === 'lease' ? 0 : (marketVal[y-1] - marketVal[y]);
-    const interest  = mode === 'lease' ? leaseCostPerYear(y) : (interestByYear[y] || 0);
-    const insurance = insBase * Math.pow(1 - insDec, y - 1);
-    const maint     = mode === 'lease' ? (BASE_MAINT[y-1] * maintMul * 0.5) : (BASE_MAINT[y-1] * maintMul); // lease maintenance lower (often included/shorter term)
-    const repair    = mode === 'lease' ? 0 : (BASE_REPAIR[y-1] * repairMul); // leases rarely hit repair costs
-    const fuel      = (annualMi / mpg) * fuelPx;
-    const credits   = y === 1 ? (fedCredit + stateCredit) : 0;
-    const taxes     = y === 1 ? (price * taxRate + annFees - credits) : annFees;
-    const opp       = oppCostByYear[y - 1];
-    // Lease terminal costs in last year of lease
-    const leaseDisp = (mode === 'lease' && y === Math.ceil(leaseTermMo / 12))
-      ? (g('leaseDis' + 'p' + car) + leaseExcessMi) : 0;
+  for (let y=1; y<=years; y++) {
+    const depCost   = mode==='lease' ? 0 : (marketVal[y-1]-marketVal[y]);
+    const interest  = mode==='lease' ? leaseCostPerYear(y) : (interestByYear[y]||0);
+    const insurance = insBase * Math.pow(1-insDec, y-1);
+    const maint     = BASE_MAINT[y-1]*maintMul*(mode==='lease'?0.5:1);
+    const repair    = mode==='lease' ? 0 : BASE_REPAIR[y-1]*repairMul;
+    const fuel      = (annualMi/mpg)*fuelPx;
+    const credits   = y===1 ? (fedCredit+stateCredit) : 0;
+    const taxes     = y===1 ? (price*taxRate+annFees-credits) : annFees;
+    const opp       = oppByYear[y-1];
+    const leaseDisp = (mode==='lease' && y===Math.ceil(leaseTermMo/12))
+      ? (g('leaseDisp'+car)+leaseExcessMi) : 0;
+    const total = depCost+interest+insurance+maint+repair+fuel+taxes+opp+leaseDisp;
 
-    const total = depCost + interest + insurance + maint + repair + fuel + taxes + opp + leaseDisp;
-    const vehicleValueEnd = mode === 'lease' ? 0 : marketVal[y]; // lease: you don't own equity
-
-    rows.push({ year: y, depCost, interest, insurance, maint, repair, fuel, taxes, opp, leaseDisp, total, vehicleValueEnd, isLease: mode === 'lease' });
+    rows.push({ year:y, depCost, interest, insurance, maint, repair, fuel, taxes, opp, leaseDisp, total,
+      vehicleValueEnd: mode==='lease' ? 0 : marketVal[y] });
   }
 
   return {
-    rows,
-    marketVal,
+    rows, marketVal,
     name: document.getElementById('name'+car).value || ('Vehicle '+car),
-    mode,
+    mode
   };
 }
 
-// ─── Chart ────────────────────────────────────────────────────────────────────
-let mainChart = null;
-let currentChartType = 'cumulative';
-let lastResultA, lastResultB, lastYears;
+// ── Format ────────────────────────────────────────────────────────────────────
+const fmt  = n => '$'+Math.round(n).toLocaleString();
+const fmtK = n => Math.abs(n)>=1000 ? '$'+(Math.abs(n)/1000).toFixed(1)+'k' : fmt(n);
 
-function switchChart(type, btn) {
-  currentChartType = type;
-  document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderChart(lastResultA, lastResultB, lastYears);
+// ── Render sticky bar ─────────────────────────────────────────────────────────
+function renderBar(rA, rB, years) {
+  const tA = rA.rows.reduce((s,r)=>s+r.total,0);
+  const tB = rB.rows.reduce((s,r)=>s+r.total,0);
+  document.getElementById('barNameA').textContent = rA.name;
+  document.getElementById('barNameB').textContent = rB.name;
+  document.getElementById('barTotalA').textContent = fmt(tA);
+  document.getElementById('barTotalB').textContent = fmt(tB);
+  document.getElementById('barSavings').textContent = fmt(Math.abs(tA-tB));
 }
 
-function renderChart(rA, rB, years) {
-  const labels = rA.rows.map(r => `Yr ${r.year}`);
+// ── Render summary cards ──────────────────────────────────────────────────────
+function renderSummary(rA, rB, years) {
+  const tA = rA.rows.reduce((s,r)=>s+r.total,0);
+  const tB = rB.rows.reduce((s,r)=>s+r.total,0);
+  const diff = Math.abs(tA-tB);
+  const cheaper = tA<=tB ? 'A' : 'B';
+  const modeBadge = m => m==='lease'
+    ? '<span class="badge badge-lease">Lease</span>'
+    : m==='cash'
+    ? '<span class="badge badge-cash">Cash</span>'
+    : '<span class="badge badge-loan">Loan</span>';
+
+  document.getElementById('summaryRow').innerHTML = `
+    <div class="sum-card card-a">
+      <div class="sc-label">${years}-Year Total Cost</div>
+      <div class="sc-name">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--blue);margin-right:2px;flex-shrink:0"></span>
+        ${rA.name}
+        ${cheaper==='A'?'<span class="badge badge-winner">✓ Lower Cost</span>':''}
+      </div>
+      <div class="sc-total">${fmt(tA)}</div>
+      <div class="sc-sub">${modeBadge(rA.mode)} · ${fmt(tA/years)}/yr · ${fmt(tA/(years*(parseFloat(document.getElementById('annualMiles').value)||15000)))}/mi</div>
+    </div>
+    <div class="sum-card card-b">
+      <div class="sc-label">${years}-Year Total Cost</div>
+      <div class="sc-name">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:2px;flex-shrink:0"></span>
+        ${rB.name}
+        ${cheaper==='B'?'<span class="badge badge-winner">✓ Lower Cost</span>':''}
+      </div>
+      <div class="sc-total">${fmt(tB)}</div>
+      <div class="sc-sub">${modeBadge(rB.mode)} · ${fmt(tB/years)}/yr · ${fmt(tB/(years*(parseFloat(document.getElementById('annualMiles').value)||15000)))}/mi</div>
+    </div>
+    <div class="sum-card card-diff">
+      <div class="sc-label">Total Savings</div>
+      <div class="sc-name">${cheaper==='A'?rA.name:rB.name} is cheaper</div>
+      <div class="sc-total">${fmt(diff)}</div>
+      <div class="sc-sub">${fmt(diff/years)}/yr over ${years} years</div>
+    </div>`;
+}
+
+// ── Render breakdown bars ─────────────────────────────────────────────────────
+function renderBreakdown(rA, rB) {
+  const totA = rA.rows.reduce((s,r)=>s+r.total,0);
+  const totB = rB.rows.reduce((s,r)=>s+r.total,0);
+
+  const catTotals = car => {
+    const r = car==='A' ? rA : rB;
+    return CAT_KEYS.map(k => r.rows.reduce((s,row)=>s+row[k],0));
+  };
+
+  const barHtml = (car, total, color) => {
+    const tots = catTotals(car);
+    const segs = tots.map((v,i) => {
+      const w = total>0 ? (v/total*100).toFixed(2) : 0;
+      return `<div class="bar-seg" style="width:${w}%;background:${CAT_COLORS[i]}" title="${CAT_NAMES[i]}: ${fmt(v)}"></div>`;
+    }).join('');
+    return segs;
+  };
+
+  document.getElementById('breakdownWrap').innerHTML = `
+    <h3>Cost Category Breakdown</h3>
+    <div class="breakdown-vehicle">
+      <div class="bv-header">
+        <span class="bv-name a">${rA.name}</span>
+        <span class="bv-total a">${fmt(totA)}</span>
+      </div>
+      <div class="stacked-bar">${barHtml('A',totA,'var(--blue)')}</div>
+    </div>
+    <div class="breakdown-vehicle">
+      <div class="bv-header">
+        <span class="bv-name b">${rB.name}</span>
+        <span class="bv-total b">${fmt(totB)}</span>
+      </div>
+      <div class="stacked-bar">${barHtml('B',totB,'var(--amber)')}</div>
+    </div>
+    <div class="bd-legend">
+      ${CAT_NAMES.map((n,i)=>`<div class="bd-legend-item"><div class="bd-legend-dot" style="background:${CAT_COLORS[i]}"></div>${n}</div>`).join('')}
+    </div>`;
+}
+
+// ── Render chart ──────────────────────────────────────────────────────────────
+function switchChart(type, btn) {
+  currentChartType = type;
+  document.querySelectorAll('.ctbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart(lastRA, lastRB);
+}
+
+function renderChart(rA, rB) {
+  const labels = rA.rows.map(r=>`Year ${r.year}`);
   let datasets = [];
 
-  if (currentChartType === 'cumulative') {
-    let cA = 0; const dA = rA.rows.map(r => { cA += r.total; return Math.round(cA); });
-    let cB = 0; const dB = rB.rows.map(r => { cB += r.total; return Math.round(cB); });
-    datasets = [
-      { label: rA.name, data: dA, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.1)', fill: true, tension: 0.35 },
-      { label: rB.name, data: dB, borderColor: '#f7a34f', backgroundColor: 'rgba(247,163,79,.08)', fill: true, tension: 0.35 },
+  if (currentChartType==='cumulative') {
+    let cA=0,cB=0;
+    datasets=[
+      { label:rA.name, data:rA.rows.map(r=>{cA+=r.total;return Math.round(cA);}), borderColor:'#4d8bf5', backgroundColor:'rgba(77,139,245,.08)', fill:true, tension:.35, pointBackgroundColor:'#4d8bf5', pointRadius:3 },
+      { label:rB.name, data:rB.rows.map(r=>{cB+=r.total;return Math.round(cB);}), borderColor:'#f5a623', backgroundColor:'rgba(245,166,35,.06)', fill:true, tension:.35, pointBackgroundColor:'#f5a623', pointRadius:3 },
     ];
-  } else if (currentChartType === 'annual') {
-    datasets = [
-      { label: rA.name, data: rA.rows.map(r => Math.round(r.total)), backgroundColor: 'rgba(79,142,247,.75)', borderRadius: 4 },
-      { label: rB.name, data: rB.rows.map(r => Math.round(r.total)), backgroundColor: 'rgba(247,163,79,.75)', borderRadius: 4 },
+  } else if (currentChartType==='annual') {
+    datasets=[
+      { label:rA.name, data:rA.rows.map(r=>Math.round(r.total)), backgroundColor:'rgba(77,139,245,.8)', borderRadius:5 },
+      { label:rB.name, data:rB.rows.map(r=>Math.round(r.total)), backgroundColor:'rgba(245,166,35,.8)', borderRadius:5 },
     ];
-  } else if (currentChartType === 'value') {
-    datasets = [
-      { label: rA.name + ' Value', data: rA.rows.map(r => Math.round(r.vehicleValueEnd)), borderColor: '#4f8ef7', tension: 0.35, pointRadius: 4, fill: false },
-      { label: rB.name + ' Value', data: rB.rows.map(r => Math.round(r.vehicleValueEnd)), borderColor: '#f7a34f', tension: 0.35, pointRadius: 4, fill: false },
+  } else if (currentChartType==='value') {
+    datasets=[
+      { label:rA.name+' Value', data:rA.rows.map(r=>Math.round(r.vehicleValueEnd)), borderColor:'#4d8bf5', tension:.35, pointRadius:4, fill:false },
+      { label:rB.name+' Value', data:rB.rows.map(r=>Math.round(r.vehicleValueEnd)), borderColor:'#f5a623', tension:.35, pointRadius:4, fill:false },
     ];
   } else {
-    const cats  = ['Depreciation/Lease','Interest/Payments','Insurance','Maint.','Repairs','Fuel','Taxes/Fees','Opp. Cost'];
-    const keys  = ['depCost','interest','insurance','maint','repair','fuel','taxes','opp'];
-    const colsA = ['#e05c5c','#f7a34f','#9b6cf7','#4f8ef7','#4caf82','#f7e24f','#7b80a0','#50c8d8'];
-    const colsB = ['#e05c5c88','#f7a34f88','#9b6cf788','#4f8ef788','#4caf8288','#f7e24f88','#7b80a088','#50c8d888'];
-    keys.forEach((k, i) => {
-      datasets.push({ label: cats[i] + ' A', data: rA.rows.map(r => Math.round(r[k])), backgroundColor: colsA[i], borderRadius: 2, stack: 'A' });
-      datasets.push({ label: cats[i] + ' B', data: rB.rows.map(r => Math.round(r[k])), backgroundColor: colsB[i], borderRadius: 2, stack: 'B' });
+    CAT_KEYS.forEach((k,i)=>{
+      datasets.push({ label:CAT_NAMES[i]+' (A)', data:rA.rows.map(r=>Math.round(r[k])), backgroundColor:CAT_COLORS[i]+'cc', borderRadius:2, stack:'A' });
+      datasets.push({ label:CAT_NAMES[i]+' (B)', data:rB.rows.map(r=>Math.round(r[k])), backgroundColor:CAT_COLORS[i]+'55', borderRadius:2, stack:'B' });
     });
   }
 
   const ctx = document.getElementById('mainChart');
   if (mainChart) mainChart.destroy();
-  const isBar = currentChartType === 'annual' || currentChartType === 'breakdown';
-  mainChart = new Chart(ctx, {
-    type: isBar ? 'bar' : 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      plugins: {
-        legend: { labels: { color: '#7b80a0', font: { size: 11 }, boxWidth: 12 } },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } }
+  mainChart = new Chart(ctx,{
+    type: currentChartType==='annual'||currentChartType==='breakdown' ? 'bar':'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        legend:{ labels:{ color:'#8891b0', font:{size:11,family:'Inter'}, boxWidth:10, padding:16 } },
+        tooltip:{ callbacks:{ label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}` }, backgroundColor:'#1c2030', titleColor:'#eef0f8', bodyColor:'#8891b0', borderColor:'rgba(255,255,255,.1)', borderWidth:1 }
       },
-      scales: {
-        x: { ticks: { color: '#7b80a0', font: { size: 11 } }, grid: { color: '#2e3147' }, stacked: currentChartType === 'breakdown' },
-        y: { ticks: { color: '#7b80a0', font: { size: 11 }, callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'k':v) }, grid: { color: '#2e3147' }, stacked: currentChartType === 'breakdown' }
+      scales:{
+        x:{ ticks:{ color:'#515a78', font:{size:11} }, grid:{ color:'rgba(255,255,255,.04)' }, stacked:currentChartType==='breakdown' },
+        y:{ ticks:{ color:'#515a78', font:{size:11}, callback:v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v) }, grid:{ color:'rgba(255,255,255,.04)' }, stacked:currentChartType==='breakdown' }
       }
     }
   });
 }
 
-// ─── Summary cards ────────────────────────────────────────────────────────────
-function renderSummary(rA, rB, years) {
-  const totA = rA.rows.reduce((s, r) => s + r.total, 0);
-  const totB = rB.rows.reduce((s, r) => s + r.total, 0);
-  const cheaper = totA <= totB ? 'A' : 'B';
-  const diff = Math.abs(totA - totB);
-  const modeTag = m => m === 'lease' ? '<span class="tag-lease">Lease</span>' : m === 'cash' ? '<span class="tag-cash">Cash</span>' : '<span class="tag-loan">Loan</span>';
-
-  const html = `
-    <div class="card">
-      <div class="label">${years}-Year Total Cost</div>
-      <div class="value a">${fmt(totA)} ${cheaper==='A'?'<span class="winner-badge">Lower</span>':''}</div>
-      <div class="sub-value">${rA.name} ${modeTag(rA.mode)} · ${fmt(totA/years)}/yr</div>
-    </div>
-    <div class="card">
-      <div class="label">${years}-Year Total Cost</div>
-      <div class="value b">${fmt(totB)} ${cheaper==='B'?'<span class="winner-badge">Lower</span>':''}</div>
-      <div class="sub-value">${rB.name} ${modeTag(rB.mode)} · ${fmt(totB/years)}/yr</div>
-    </div>
-    <div class="card" style="grid-column:1/-1">
-      <div class="label">Savings · Cheaper Option</div>
-      <div class="value color-green">${fmt(diff)}</div>
-      <div class="sub-value">${cheaper==='A'?rA.name:rB.name} saves ${fmt(diff)} over ${years} yrs · ${fmt(diff/years)}/yr · ${fmt(diff/(years*(parseFloat(document.getElementById('annualMiles').value)||15000)))}/mi</div>
-    </div>`;
-  document.getElementById('summaryCards').innerHTML = html;
-}
-
-// ─── Detail tables ────────────────────────────────────────────────────────────
-function renderTables(rA, rB, years) {
-  const cats = ['Depreciation / Lease Pmts','Loan Interest','Insurance','Maintenance','Repairs','Fuel','Taxes, Fees & Credits','Opportunity Cost','TOTAL'];
+// ── Render detail table ───────────────────────────────────────────────────────
+function renderTable(rA, rB, years) {
+  const cats = ['Depreciation / Lease Pmts','Loan Interest / Lease Cost','Insurance','Maintenance','Repairs','Fuel','Taxes, Fees & Credits','Opportunity Cost','TOTAL'];
   const keys = ['depCost','interest','insurance','maint','repair','fuel','taxes','opp','total'];
 
-  let html = '';
+  let html = `<div class="table-panel-header"><h3>Year-by-Year Detail</h3></div>`;
+  html += `<div class="table-scroll"><table><thead><tr>
+    <th style="min-width:160px">Category</th>`;
+  for(let y=1;y<=years;y++) html+=`<th>Yr ${y}</th>`;
+  html+=`<th>Total</th></tr></thead><tbody>`;
 
-  const renderCarTable = (r, colorClass) => {
-    let t = `<tr><td colspan="${years+2}" style="padding:8px 8px 4px;font-weight:600;font-size:12px" class="${colorClass}">${r.name}</td></tr>`;
-    cats.forEach((cat, ci) => {
-      const k = keys[ci]; const isTotal = k === 'total';
-      t += `<tr${isTotal?' class="row-total"':''}>`;
-      t += `<td>${cat}</td>`;
-      let rowTot = 0;
-      r.rows.forEach(row => { rowTot += row[k]; t += `<td${isTotal?' class="'+colorClass+'"':''}>${fmt(row[k])}</td>`; });
-      t += `<td${isTotal?' class="'+colorClass+'"':''}><strong>${fmt(rowTot)}</strong></td></tr>`;
+  const carSection = (r, colorClass, cKey) => {
+    let s = `<tr class="section-header"><td colspan="${years+2}" class="${cKey}">
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:middle"></span>
+      ${r.name}${r.mode==='lease'?' (Lease)':r.mode==='cash'?' (Cash)':''}
+    </td></tr>`;
+    cats.forEach((cat,ci)=>{
+      const k=keys[ci]; const isTotal=k==='total';
+      s+=`<tr${isTotal?` class="row-total"`:''}><td>${cat}</td>`;
+      let rt=0;
+      r.rows.forEach(row=>{ rt+=row[k]; s+=`<td${isTotal?` class="${cKey}"`:''}>${fmt(row[k])}</td>`; });
+      s+=`<td${isTotal?` class="${cKey}"`:''}><strong>${fmt(rt)}</strong></td></tr>`;
     });
-    // Equity row for purchased vehicles
-    if (r.mode !== 'lease') {
-      t += `<tr><td style="color:var(--green)">Residual Equity (end yr)</td>`;
-      r.rows.forEach(row => { t += `<td style="color:var(--green)">${fmt(row.vehicleValueEnd)}</td>`; });
-      const lastEquity = r.rows[r.rows.length-1]?.vehicleValueEnd || 0;
-      t += `<td style="color:var(--green)"><strong>${fmt(lastEquity)}</strong></td></tr>`;
-
-      const totCost = r.rows.reduce((s,row)=>s+row.total,0);
-      const netCost = totCost - lastEquity;
-      t += `<tr class="row-total"><td style="color:var(--green)">Net Cost (after selling)</td>`;
-      r.rows.forEach((row,i) => {
-        const cumCost = r.rows.slice(0,i+1).reduce((s,rr)=>s+rr.total,0);
-        const eq = row.vehicleValueEnd;
-        t += `<td style="color:var(--green)">${fmt(cumCost-eq)}</td>`;
+    if(r.mode!=='lease'){
+      s+=`<tr class="row-equity"><td>→ Residual Value (end yr)</td>`;
+      r.rows.forEach(row=>{ s+=`<td>${fmt(row.vehicleValueEnd)}</td>`; });
+      s+=`<td>${fmt(r.rows[r.rows.length-1]?.vehicleValueEnd||0)}</td></tr>`;
+      s+=`<tr class="row-net"><td>→ Net Cost (total − equity)</td>`;
+      r.rows.forEach((row,i)=>{
+        const cum=r.rows.slice(0,i+1).reduce((a,rr)=>a+rr.total,0);
+        s+=`<td>${fmt(cum-row.vehicleValueEnd)}</td>`;
       });
-      t += `<td style="color:var(--green)"><strong>${fmt(netCost)}</strong></td></tr>`;
+      const totC=r.rows.reduce((a,rr)=>a+rr.total,0);
+      const lastEq=r.rows[r.rows.length-1]?.vehicleValueEnd||0;
+      s+=`<td><strong>${fmt(totC-lastEq)}</strong></td></tr>`;
     }
-    return t;
+    return s;
   };
 
-  html += '<div class="section-title">Year-by-Year Cost Detail</div>';
-  html += '<div class="table-scroll"><table><thead><tr><th>Category</th>';
-  for (let y = 1; y <= years; y++) html += `<th>Yr ${y}</th>`;
-  html += '<th>Total</th></tr></thead><tbody>';
-  html += renderCarTable(rA, 'color-a');
-  html += renderCarTable(rB, 'color-b');
+  html += carSection(rA,'c-a','color: var(--blue)');
+  html += carSection(rB,'c-b','color: var(--amber)');
 
-  // Diff rows
-  html += `<tr><td colspan="${years+2}" style="padding:10px 8px 4px;font-weight:600;font-size:12px;color:var(--green)">Difference (A − B)</td></tr>`;
-  cats.forEach((cat, ci) => {
-    const k = keys[ci];
-    html += '<tr>';
-    html += `<td>${cat}</td>`;
-    let diffTot = 0;
-    for (let i = 0; i < rA.rows.length; i++) {
-      const d = rA.rows[i][k] - rB.rows[i][k]; diffTot += d;
-      html += `<td style="color:${d>0?'var(--red)':d<0?'var(--green)':'var(--muted)'}">${d>=0?'+':''}${fmt(d)}</td>`;
+  // Difference
+  html+=`<tr class="section-header"><td colspan="${years+2}" style="color:var(--green)">
+    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle"></span>
+    Difference (A − B)
+  </td></tr>`;
+  cats.forEach((cat,ci)=>{
+    const k=keys[ci];
+    html+=`<tr><td>${cat}</td>`;
+    let dt=0;
+    for(let i=0;i<rA.rows.length;i++){
+      const d=rA.rows[i][k]-rB.rows[i][k]; dt+=d;
+      const col=d>50?'var(--red)':d<-50?'var(--green)':'var(--txt3)';
+      html+=`<td style="color:${col}">${d>=0?'+':''}${fmt(d)}</td>`;
     }
-    html += `<td style="font-weight:700;color:${diffTot>0?'var(--red)':diffTot<0?'var(--green)':'var(--muted)'}">${diffTot>=0?'+':''}${fmt(diffTot)}</td></tr>`;
+    const col=dt>50?'var(--red)':dt<-50?'var(--green)':'var(--txt3)';
+    html+=`<td style="font-weight:700;color:${col}">${dt>=0?'+':''}${fmt(dt)}</td></tr>`;
   });
 
-  html += '</tbody></table></div>';
-  document.getElementById('detailTables').innerHTML = html;
+  html+=`</tbody></table></div>`;
+  document.getElementById('tablePanel').innerHTML=html;
 }
 
-// ─── Main recalculate ─────────────────────────────────────────────────────────
+// ── Master recalculate ────────────────────────────────────────────────────────
 function recalculate() {
-  const years = parseInt(document.getElementById('yearsSlider').value);
+  const years = activeYear;
   const rA = calcCar('A', years);
   const rB = calcCar('B', years);
-  lastResultA = rA; lastResultB = rB; lastYears = years;
+  lastRA = rA; lastRB = rB;
+
+  renderBar(rA, rB, years);
   renderSummary(rA, rB, years);
-  renderChart(rA, rB, years);
-  renderTables(rA, rB, years);
+  renderBreakdown(rA, rB);
+  renderChart(rA, rB);
+  renderTable(rA, rB, years);
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-buildDepTable('A');
-buildDepTable('B');
-// Show initial finance panel
-['loan','cash','lease'].forEach(m => {
-  document.getElementById(`fin${m.charAt(0).toUpperCase()+m.slice(1)}_A`).style.display = m === 'loan' ? 'block' : 'none';
-  document.getElementById(`fin${m.charAt(0).toUpperCase()+m.slice(1)}_B`).style.display = m === 'loan' ? 'block' : 'none';
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildDepGrid('A'); buildDepGrid('B');
+buildYearPills();
+
+// show initial finance panels
+['A','B'].forEach(car => {
+  ['Loan','Cash','Lease'].forEach(m => {
+    const el=document.getElementById('fin'+m+'_'+car);
+    if(el) el.style.display=m==='Loan'?'':'none';
+  });
 });
+
 recalculate();
 </script>
 </body>
